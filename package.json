@@ -18,8 +18,12 @@
   "engines": {
     "node": ">=6"
   },
-  "keywords": [
-  ],
+  "keywords": [],
+  "dependencies": {
+    "mk-dirs": "^1.0.0",
+    "rewrite-imports": "^1.4.0",
+    "terser": "^3.14.0"
+  },
   "devDependencies": {
     "tap-spec": "^5.0.0",
     "tape": "^4.9.1"
