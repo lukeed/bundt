@@ -1,0 +1,27 @@
+{
+  "name": "bundt",
+  "version": "0.0.0",
+  "repository": "lukeed/bundt",
+  "description": "WIP",
+  "license": "MIT",
+  "files": [
+    "*.js"
+  ],
+  "author": {
+    "name": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "lukeed.com"
+  },
+  "scripts": {
+    "test": "tape test/*.js | tap-spec"
+  },
+  "engines": {
+    "node": ">=6"
+  },
+  "keywords": [
+  ],
+  "devDependencies": {
+    "tap-spec": "^5.0.0",
+    "tape": "^4.9.1"
+  }
+}
