@@ -1,3 +1,4 @@
+const { gzipSync } = require('zlib');
 const { existsSync, readFileSync, writeFileSync } = require('fs');
 const { dirname, normalize, resolve } = require('path');
 const imports = require('rewrite-imports');
@@ -57,10 +58,9 @@ const UMD = isDefault
 	? `!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):e${mount}=t()}(this,function(){${code.replace(/module.exports=/, 'return ')}});`
 	: `!function(e,n){"object"==typeof exports&&"undefined"!=typeof module?n(exports):"function"==typeof define&&define.amd?define(["exports"],n):n(e${mount}={})}(this,function(e){${code}})));`
 
-
 // Writes
 if (output.esm) write(output.esm, ESM);
 if (output.cjs) write(output.cjs, CJS);
 if (output.umd) write(output.umd, UMD);
 
-console.log('TODO size(s?)', code.length);
+console.log('TODO size(s?)', gzipSync(code).length);
