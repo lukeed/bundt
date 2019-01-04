@@ -20,6 +20,7 @@
   },
   "keywords": [],
   "dependencies": {
+    "kleur": "^3.0.1",
     "mk-dirs": "^1.0.0",
     "rewrite-imports": "^1.4.0",
     "terser": "^3.14.0"

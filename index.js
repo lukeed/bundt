@@ -1,11 +1,17 @@
 const { gzipSync } = require('zlib');
 const { existsSync, readFileSync, writeFileSync } = require('fs');
 const { dirname, normalize, resolve } = require('path');
+const { white, cyan, dim } = require('kleur');
 const imports = require('rewrite-imports');
 const { minify } = require('terser');
 const mkdir = require('mk-dirs');
 
+const _ = ' ';
+const gutter = _.repeat(4);
 const UNITS = ['B ', 'kB', 'MB', 'GB'];
+const lpad = (str, max) => _.repeat(max - str.length) + str;
+const rpad = (str, max) => str + _.repeat(max - str.length);
+const th = dim().bold().italic().underline;
 
 function size(val=0) {
 	if (val < 1e3) return `${val} ${UNITS[0]}`;
@@ -25,6 +31,8 @@ function write(file, data, isUMD) {
 	return mkdir(dirname(file)).then(() => {
 		let { code } = minify(data, { toplevel:!isUMD }); // TODO
 		writeFileSync(file, isUMD ? code : data);
+		let gzip = size(gzipSync(code).length);
+		return { file, size:size(code.length), gzip };
 	});
 }
 
@@ -72,8 +80,27 @@ const UMD = isDefault
 	: `!function(global,factory){"object"==typeof exports&&"undefined"!=typeof module?factory(exports):"function"==typeof define&&define.amd?define(["exports"],factory):factory(global${mount}={})}(this,function(global){${CJS}});`
 
 // Writes
-if (output.cjs) write(output.cjs, CJS),
-if (output.esm) write(output.esm, ESM),
-if (output.umd) write(output.umd, UMD, 1),
+Promise.all([
+	output.cjs && write(output.cjs, CJS),
+	output.esm && write(output.esm, ESM),
+	output.umd && write(output.umd, UMD, 1),
+].filter(Boolean)).then(arr => {
+	let f=0, s=0, g=0, out='';
 
-console.log('TODO size(s?)', size(gzipSync(code).length));
+	arr.forEach(obj => {
+		f = Math.max(f, obj.file.length);
+		s = Math.max(s, obj.size.length);
+		g = Math.max(g, obj.gzip.length);
+	});
+
+	f += 4; // spacing
+	s += 4;
+
+	out += th(rpad('Filename', f)) + gutter + th(lpad('Filesize', s)) + _ + _ + dim().bold().italic(lpad('(gzip)', g));
+
+	arr.forEach(obj => {
+		out += ('\n' + white(rpad(obj.file, f)) + gutter + cyan(lpad(obj.size, s)) + dim().italic(_ + _ + lpad(obj.gzip, g)));
+	});
+
+	console.log(out);
+});
