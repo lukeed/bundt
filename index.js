@@ -5,13 +5,6 @@ const imports = require('rewrite-imports');
 const { minify } = require('terser');
 const mkdir = require('mk-dirs');
 
-function write(file, data) {
-	file = normalize(file);
-	return mkdir(dirname(file)).then(() => {
-		writeFileSync(file, data);
-	});
-}
-
 const UNITS = ['B ', 'kB', 'MB', 'GB'];
 
 function size(val=0) {
@@ -25,6 +18,14 @@ function size(val=0) {
 		out = (out + '00').substring(0, idx + 3); // 2 + 1 for 0-based
 	}
 	return out + ' ' + UNITS[exp];
+}
+
+function write(file, data, isUMD) {
+	file = normalize(file);
+	return mkdir(dirname(file)).then(() => {
+		let { code } = minify(data, { toplevel:!isUMD }); // TODO
+		writeFileSync(file, isUMD ? code : data);
+	});
 }
 
 const argv = process.argv.slice(2);
@@ -50,6 +51,7 @@ const output = {
 };
 
 const ESM = readFileSync(entry, 'utf8');
+const mount = /[.-]/.test(name) ? `['${name}']` : `.${name}`;
 const isDefault = /export default/.test(ESM);
 
 let keys = [];
@@ -65,17 +67,13 @@ if (keys.length > 0) {
 	});
 }
 
-const { code, error } = minify(CJS, { toplevel:true });
-const mount = /[.-]/.test(name) ? `['${name}']` : `.${name}`;
-console.log(code, error);
-
 const UMD = isDefault
 	? `!function(global,factory){"object"==typeof exports&&"undefined"!=typeof module?module.exports=factory():"function"==typeof define&&define.amd?define(factory):global${mount}=factory()}(this,function(){${CJS.replace(/module.exports=/, 'return ')}});`
 	: `!function(global,factory){"object"==typeof exports&&"undefined"!=typeof module?factory(exports):"function"==typeof define&&define.amd?define(["exports"],factory):factory(global${mount}={})}(this,function(global){${CJS}});`
 
 // Writes
-if (output.esm) write(output.esm, ESM);
-if (output.cjs) write(output.cjs, CJS);
-if (output.umd) write(output.umd, UMD);
+if (output.cjs) write(output.cjs, CJS),
+if (output.esm) write(output.esm, ESM),
+if (output.umd) write(output.umd, UMD, 1),
 
 console.log('TODO size(s?)', size(gzipSync(code).length));
