@@ -4,6 +4,9 @@
   "repository": "lukeed/bundt",
   "description": "WIP",
   "license": "MIT",
+  "bin": {
+    "bundt": "index.js"
+  },
   "files": [
     "*.js"
   ],
