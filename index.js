@@ -12,6 +12,21 @@ function write(file, data) {
 	});
 }
 
+const UNITS = ['B ', 'kB', 'MB', 'GB'];
+
+function size(val=0) {
+	if (val < 1e3) return `${val} ${UNITS[0]}`;
+	let exp = Math.min(Math.floor(Math.log10(val) / 3), UNITS.length - 1) || 1;
+	let out = (val / Math.pow(1e3, exp)).toPrecision(3);
+	let idx = out.indexOf('.');
+	if (idx === -1) {
+		out += '.00';
+	} else if (out.length - idx - 1 !== 2) {
+		out = (out + '00').substring(0, idx + 3); // 2 + 1 for 0-based
+	}
+	return out + ' ' + UNITS[exp];
+}
+
 const argv = process.argv.slice(2);
 const entry = resolve(argv[0] || 'src/index.js');
 
@@ -63,4 +78,4 @@ if (output.esm) write(output.esm, ESM);
 if (output.cjs) write(output.cjs, CJS);
 if (output.umd) write(output.umd, UMD);
 
-console.log('TODO size(s?)', gzipSync(code).length);
+console.log('TODO size(s?)', size(gzipSync(code).length));
