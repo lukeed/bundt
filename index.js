@@ -70,8 +70,8 @@ const mount = /[.-]/.test(name) ? `['${name}']` : `.${name}`;
 console.log(code, error);
 
 const UMD = isDefault
-	? `!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):e${mount}=t()}(this,function(){${code.replace(/module.exports=/, 'return ')}});`
-	: `!function(e,n){"object"==typeof exports&&"undefined"!=typeof module?n(exports):"function"==typeof define&&define.amd?define(["exports"],n):n(e${mount}={})}(this,function(e){${code}})));`
+	? `!function(global,factory){"object"==typeof exports&&"undefined"!=typeof module?module.exports=factory():"function"==typeof define&&define.amd?define(factory):global${mount}=factory()}(this,function(){${CJS.replace(/module.exports=/, 'return ')}});`
+	: `!function(global,factory){"object"==typeof exports&&"undefined"!=typeof module?factory(exports):"function"==typeof define&&define.amd?define(["exports"],factory):factory(global${mount}={})}(this,function(global){${CJS}});`
 
 // Writes
 if (output.esm) write(output.esm, ESM);
