@@ -29,27 +29,21 @@ function size(val=0) {
 function write(file, data, isUMD) {
 	file = normalize(file);
 	return mkdir(dirname(file)).then(() => {
-		let { code } = minify(data, { toplevel:!isUMD }); // TODO
+		let { code } = minify(data, Object.assign({ toplevel:!isUMD }, terser));
 		writeFileSync(file, isUMD ? code : data);
 		let gzip = size(gzipSync(code).length);
 		return { file, size:size(code.length), gzip };
 	});
 }
 
-const argv = process.argv.slice(2);
-const entry = resolve(argv[0] || 'src/index.js');
-
+const rcfile = resolve('.terserrc');
 const pkgfile = resolve('package.json');
 const pkg = existsSync(pkgfile) && require(pkgfile);
-const name = pkg['umd:name'] || pkg.name;
+if (!pkg) return console.log('Does not exist: %s', pkgfile);
 
-if (!pkg) {
-	return console.log('Does not exist: %s', pkg);
-}
-
-if (!existsSync(entry)) {
-	return console.log('Does not exist: %s', entry);
-}
+const argv = process.argv.slice(2);
+const entry = resolve(argv[0] || 'src/index.js');
+if (!existsSync(entry)) return console.log('Does not exist: %s', entry);
 
 // Parsed config
 const output = {
@@ -59,8 +53,11 @@ const output = {
 };
 
 const ESM = readFileSync(entry, 'utf8');
-const mount = /[.-]/.test(name) ? `['${name}']` : `.${name}`;
 const isDefault = /export default/.test(ESM);
+
+const name = pkg['umd:name'] || pkg.name;
+const mount = /[.-]/.test(name) ? `['${name}']` : `.${name}`;
+const terser = pkg.terser || existsSync(rcfile) ? JSON.parse(readFileSync(rcfile)) : {};
 
 let keys = [];
 let CJS = imports(ESM)
