@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { gzipSync } = require('zlib');
 const { existsSync, readFileSync, writeFileSync } = require('fs');
 const { dirname, normalize, resolve } = require('path');
