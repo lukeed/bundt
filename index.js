@@ -77,7 +77,7 @@ const ESM = readFileSync(entry, 'utf8');
 const isDefault = /export default/.test(ESM);
 
 const name = pkg['umd:name'] || pkg.name;
-const mount = /[.-@]/.test(name) ? `['${name}']` : `.${name}`;
+const mount = /(.|-|@)/.test(name) ? `['${name}']` : `.${name}`;
 const terser = pkg.terser || existsSync(rcfile) ? JSON.parse(readFileSync(rcfile)) : {};
 
 let keys = [];
