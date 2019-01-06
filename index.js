@@ -104,7 +104,7 @@ Promise.all([
 	output.esm && write(output.esm, ESM),
 	output.umd && write(output.umd, UMD, 1),
 ].filter(Boolean)).then(arr => {
-	let f=0, s=0, g=0, out='';
+	let f=8, s=8, g=6, out='';
 
 	arr.forEach(obj => {
 		f = Math.max(f, obj.file.length);
@@ -113,7 +113,6 @@ Promise.all([
 	});
 
 	f += 4; // spacing
-	s += 4;
 
 	out += th(rpad('Filename', f)) + gutter + th(lpad('Filesize', s)) + _ + _ + dim().bold().italic(lpad('(gzip)', g));
 
