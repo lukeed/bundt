@@ -122,4 +122,7 @@ Promise.all([
 	});
 
 	console.log(out);
+}).catch(err => {
+	console.error(err);
+	process.exit(1);
 });
