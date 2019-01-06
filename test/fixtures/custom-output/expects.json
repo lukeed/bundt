@@ -1,0 +1,5 @@
+{
+  "umd": "build/output.min.js",
+  "esm": "build/output.mjs",
+  "cjs": "build/output.js"
+}

@@ -1,0 +1,4 @@
+{
+  "cjs": "dist/module.js",
+  "esm": "dist/module.mjs"
+}

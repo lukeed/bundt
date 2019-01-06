@@ -1,0 +1,5 @@
+{
+  "name": "foobar123",
+  "cjs": "dist/custom-name.js",
+  "umd": "dist/named.min.js"
+}

@@ -1,0 +1,5 @@
+{
+  "name": "unpkg",
+  "main": "dist/unpkg.js",
+  "unpkg": "dist/unpkg.min.js"
+}

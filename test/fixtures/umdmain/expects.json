@@ -1,0 +1,4 @@
+{
+  "cjs": "dist/umdmain.js",
+  "umd": "dist/umdmain.min.js"
+}

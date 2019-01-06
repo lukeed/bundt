@@ -1,0 +1,6 @@
+{
+  "entry": "lib/entry.js",
+  "umd": "dist/entry.min.js",
+  "esm": "dist/entry.mjs",
+  "cjs": "dist/entry.js"
+}

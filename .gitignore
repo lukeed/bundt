@@ -2,3 +2,7 @@ node_modules
 .DS_Store
 *.lock
 *.log
+
+# tests
+build
+dist

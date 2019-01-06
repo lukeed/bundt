@@ -1,0 +1,6 @@
+{
+  "name": "custom-entry",
+  "unpkg": "dist/entry.min.js",
+  "module": "dist/entry.mjs",
+  "main": "dist/entry.js"
+}

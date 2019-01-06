@@ -1,0 +1,4 @@
+{
+  "cjs": "dist/unpkg.js",
+  "umd": "dist/unpkg.min.js"
+}

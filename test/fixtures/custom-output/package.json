@@ -1,0 +1,6 @@
+{
+  "name": "custom-output",
+  "unpkg": "build/output.min.js",
+  "module": "build/output.mjs",
+  "main": "build/output.js"
+}

@@ -1,0 +1,5 @@
+{
+  "name": "module",
+  "main": "dist/module.js",
+  "module": "dist/module.mjs"
+}

@@ -1,0 +1,5 @@
+{
+  "name": "custom-name",
+  "umd:name": "foobar123",
+  "unpkg": "dist/named.min.js"
+}
