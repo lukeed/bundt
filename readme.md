@@ -12,9 +12,6 @@
   <a href="https://npmjs.org/package/bundt">
     <img src="https://badgen.now.sh/npm/dm/bundt" alt="downloads" />
   </a>
-  <a href="https://packagephobia.now.sh/result?p=bundt">
-    <img src="https://packagephobia.now.sh/badge?p=bundt" alt="install size" />
-  </a>
 </div>
 
 <div align="center">A simple bundler for your delcious modules~!</div>
