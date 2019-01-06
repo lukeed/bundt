@@ -5,7 +5,6 @@ const { dirname, normalize, resolve } = require('path');
 const { white, cyan, dim } = require('kleur');
 
 const _ = ' ';
-const gutter = _.repeat(4);
 const UNITS = ['B ', 'kB', 'MB', 'GB'];
 const lpad = (str, max) => _.repeat(max - str.length) + str;
 const rpad = (str, max) => str + _.repeat(max - str.length);
@@ -114,13 +113,13 @@ Promise.all([
 
 	f += 4; // spacing
 
-	out += th(rpad('Filename', f)) + gutter + th(lpad('Filesize', s)) + _ + _ + dim().bold().italic(lpad('(gzip)', g));
+	out += th(rpad('Filename', f)) + _.repeat(4) + th(lpad('Filesize', s)) + '  ' + dim().bold().italic(lpad('(gzip)', g));
 
 	arr.forEach(obj => {
-		out += ('\n' + white(rpad(obj.file, f)) + gutter + cyan(lpad(obj.size, s)) + dim().italic(_ + _ + lpad(obj.gzip, g)));
+		out += ('\n' + white(rpad(obj.file, f)) + _.repeat(4) + cyan(lpad(obj.size, s)) + '  ' + dim().italic(lpad(obj.gzip, g)));
 	});
 
-	console.log(out);
+	console.log('\n' + out + '\n');
 }).catch(err => {
 	console.error(err);
 	process.exit(1);
