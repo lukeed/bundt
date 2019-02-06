@@ -37,17 +37,25 @@ function write(file, data, isUMD) {
 
 function help() {
 	let msg = '';
-	msg += '\n  Usage\n    $ bundt [entry]\n';
-	msg += `\n  Config\n    If no ${dim('[entry]')} was provided, then ${filename('src/index.js')} is used.`;
+	let warning = dim().red().italic('not built if undefined');
+	msg += '\n  Usage\n    $ bundt [entry] [options]\n';
+	msg += `\n  Config\n    If no ${dim('[entry]')} was provided, then ${filename('src/index.js')} is used.\n`;
 	msg += `\n    Configuration lives within your ${filename('package.json')} file as these keys:`;
 	msg += `\n      • ${bullet('"main"')} – the output path for your CommonJS file ${dim().italic(`(default: ${filename(`dist/${pkg.name}.js`)})`)}`;
-	msg += `\n      • ${bullet('"module"')} – the output path for your ES Module file ${dim().red().italic('not built if undefined')}`;
-	msg += `\n      • ${bullet('"unpkg"')} ${dim('or')} ${bullet('"umd:main"')} – the output path for your UMD file ${dim().red().italic('not built if undefined')}`;
+	msg += `\n      • ${bullet('"module"')} – the output path for your ES Module file ${warning}`;
+	msg += `\n      • ${bullet('"unpkg"')} ${dim('or')} ${bullet('"umd:main"')} – the output path for your UMD file ${warning}`;
+	msg += `\n      • ${bullet('"browser"')} – the output path for your browser-specific entrypoint ${warning}`;
 	msg += `\n      • ${bullet('"umd:name"')} – the name of your UMD factory ${dim().italic(`(default: "${pkg.name}")`)}`;
-	msg += `\n      • ${bullet('"terser"')} – a config object to customize Terser behavior`;
+	msg += `\n      • ${bullet('"terser"')} – a config object to customize Terser behavior\n`;
 	msg += `\n    You may use a ${filename('.terserrc')} file to store configuration instead of the ${bullet('"terser"')} key.\n`;
-	msg += '\n  Options\n    -h, --help    Displays this message\n';
-	msg += '\n  Examples\n    $ bundt\n    $ bundt lib/index.js\n';
+	msg += '\n  Options';
+	msg += '\n     ' + dim().italic('All files are built unless 1+ limits are defined');
+	msg += `\n    --main        Builds the ${bullet('"main"')} file`;
+	msg += `\n    --unpkg       Builds the ${bullet('"unpkg"')} ${dim('or')} ${bullet('"umd:main"')} file`;
+	msg += `\n    --module      Builds the ${bullet('"module"')} file`;
+	msg += `\n    --browser     Builds the ${bullet('"browser"')} file`;
+	msg += '\n    --help, -h    Displays this message\n';
+	msg += '\n  Examples\n    $ bundt\n    $ bundt lib/index.js\n    $ bundt src/browser.js --browser --unpkg\n';
 	return console.log(msg);
 }
 
