@@ -71,6 +71,7 @@ const fields = {
 	main: pkg.main || `dist/${pkg.name}.js`,
 	unpkg: pkg.unpkg || pkg['umd:main'],
 	module: pkg.module,
+	browser: pkg.browser,
 };
 
 const ESM = readFileSync(entry, 'utf8');
@@ -101,6 +102,7 @@ const UMD = isDefault
 Promise.all([
 	fields.main && write(fields.main, CJS),
 	fields.module && write(fields.module, ESM),
+	fields.browser && write(fields.browser, ESM),
 	fields.unpkg && write(fields.unpkg, UMD, 1),
 ].filter(Boolean)).then(arr => {
 	let f=8, s=8, g=6, out='';
