@@ -1,0 +1,5 @@
+{
+  "cjs": "dist/browser.js",
+  "esm": "dist/browser.esm.js",
+  "umd": "dist/browser.min.js"
+}

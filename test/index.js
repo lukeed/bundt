@@ -12,8 +12,8 @@ const tests = {
 	umd: new RegExp(`"object"==typeof exports&&"undefined"!=typeof module`)
 };
 
-function exec(cwd, src) {
-	let args = [bin].concat(src || []);
+function exec(cwd, src, flags=[]) {
+	let args = [bin].concat(src || [], flags);
 	return spawnSync('node', args, { cwd });
 }
 
@@ -21,7 +21,7 @@ function toFiles(t, dir, obj={}) {
 	let k, file, data;
 
 	for (k in obj) {
-		if (/entry|name/.test(k)) continue;
+		if (/entry|name|argv/.test(k)) continue;
 		file = join(dir, obj[k]);
 		t.true(fs.existsSync(file), `(${k}) ~> file exists`);
 		data = fs.readFileSync(file, 'utf8');
@@ -42,7 +42,7 @@ function toTest(dirname) {
 	let expects = require( join(dir, 'expects.json') );
 
 	test(dirname, t => {
-		let pid = exec(dir, expects.entry);
+		let pid = exec(dir, expects.entry, expects.argv);
 		t.is(pid.status, 0, 'runs without error');
 		t.ok(pid.stdout.length, 'prints table to stdout');
 		toFiles(t, dir, expects);

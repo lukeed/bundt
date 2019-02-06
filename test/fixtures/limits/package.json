@@ -1,0 +1,7 @@
+{
+  "name": "limits",
+  "main": "dist/limits.js",
+  "module": "dist/limits.mjs",
+  "browser": "dist/limits.client.js",
+  "unpkg": "dist/limits.min.js"
+}

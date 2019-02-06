@@ -1,0 +1,6 @@
+{
+  "name": "browser",
+  "main": "dist/browser.js",
+  "browser": "dist/browser.esm.js",
+  "unpkg": "dist/browser.min.js"
+}
