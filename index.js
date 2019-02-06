@@ -67,10 +67,10 @@ const { minify } = require('terser');
 const mkdir = require('mk-dirs');
 
 // Parsed config
-const output = {
-	cjs: pkg.main || `dist/${pkg.name}.js`,
-	umd: pkg.unpkg || pkg['umd:main'],
-	esm: pkg.module,
+const fields = {
+	main: pkg.main || `dist/${pkg.name}.js`,
+	unpkg: pkg.unpkg || pkg['umd:main'],
+	module: pkg.module,
 };
 
 const ESM = readFileSync(entry, 'utf8');
@@ -99,9 +99,9 @@ const UMD = isDefault
 
 // Writes
 Promise.all([
-	output.cjs && write(output.cjs, CJS),
-	output.esm && write(output.esm, ESM),
-	output.umd && write(output.umd, UMD, 1),
+	fields.main && write(fields.main, CJS),
+	fields.module && write(fields.module, ESM),
+	fields.unpkg && write(fields.unpkg, UMD, 1),
 ].filter(Boolean)).then(arr => {
 	let f=8, s=8, g=6, out='';
 
