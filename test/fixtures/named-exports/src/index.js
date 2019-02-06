@@ -2,6 +2,12 @@ export function foo(a) {
 	return a + a;
 }
 
-export function bar(b) {
-	return b + b;
+export const bar = b => b + b;
+
+export let hello = 'world';
+
+export var abc = 123;
+
+export class Foo extends Component {
+	//
 }

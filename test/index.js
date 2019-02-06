@@ -8,7 +8,7 @@ const fixtures = join(__dirname, 'fixtures');
 
 const tests = {
 	cjs: /(module\.)?exports(\.?)/,
-	esm: /export (default )?(function|const)/,
+	esm: /export (default )?(function|const|class|let|var)/,
 	umd: new RegExp(`"object"==typeof exports&&"undefined"!=typeof module`)
 };
 
