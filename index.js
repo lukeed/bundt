@@ -57,9 +57,10 @@ const pkg = existsSync(pkgfile) && require(pkgfile);
 if (!pkg) return console.log('Does not exist: %s', pkgfile);
 
 const argv = process.argv.slice(2);
-const entry = resolve(argv[0] || 'src/index.js');
 if (argv.includes('-h') || argv.includes('--help')) return help();
-if (!existsSync(entry)) return console.log('Does not exist: %s', entry);
+
+const entry = resolve(!argv[0] || /^-/.test(argv[0]) ? 'src/index.js' : argv.shift());
+if (!existsSync(entry)) return console.error('Does not exist: %s', entry);
 
 // We'll actually do something – require deps
 const imports = require('rewrite-imports');
@@ -73,6 +74,13 @@ const fields = {
 	module: pkg.module,
 	browser: pkg.browser,
 };
+
+// Determine if building all or some fields
+if (argv.length > 0) {
+	let has=0, keys=Object.keys(fields);
+	let bools = keys.map(k => argv.includes('--' + k) && ++has);
+	if (has > 0) bools.forEach((x, n) => x || delete fields[keys[n]]);
+}
 
 const ESM = readFileSync(entry, 'utf8');
 const isDefault = /export default/.test(ESM);
