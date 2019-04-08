@@ -99,9 +99,9 @@ const terser = pkg.terser || existsSync(rcfile) ? JSON.parse(readFileSync(rcfile
 
 let keys = [];
 let CJS = imports(ESM)
-	.replace(/export default/, 'module.exports =')
-	.replace(/export (const|function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, type, name) => {
-		return keys.push(name) && `${type} ${name}`;
+	.replace(/(^|\s|;)export default/, '$1module.exports =')
+	.replace(/(^|\s|;)export (const|function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, x, type, name) => {
+		return keys.push(name) && `${x}${type} ${name}`;
 	});
 
 if (keys.length > 0) {
