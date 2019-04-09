@@ -1,3 +1,7 @@
+// TODO:
+//   Convert "expects" file to `.js` type
+//   so that each can run custom assertions!
+
 const fs = require('fs');
 const test = require('tape');
 const { parse, join } = require('path');

@@ -1,0 +1,8 @@
+{
+  "cjs": "dist/minify.js",
+  "esm": "dist/minify.mjs",
+  "umd": "dist/minify.min.js",
+  "argv": [
+    "--minify"
+  ]
+}

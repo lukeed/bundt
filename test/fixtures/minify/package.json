@@ -1,0 +1,6 @@
+{
+  "name": "minify",
+  "main": "dist/minify.js",
+  "unpkg": "dist/minify.min.js",
+  "module": "dist/minify.mjs"
+}
