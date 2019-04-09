@@ -54,6 +54,7 @@ function help() {
 	msg += `\n    --unpkg       Builds the ${bullet('"unpkg"')} ${dim('or')} ${bullet('"umd:main"')} file`;
 	msg += `\n    --module      Builds the ${bullet('"module"')} file`;
 	msg += `\n    --browser     Builds the ${bullet('"browser"')} file`;
+	msg += `\n    --minify      Minify ${bullet('all')} file formats`;
 	msg += '\n    --help, -h    Displays this message\n';
 	msg += '\n  Examples\n    $ bundt\n    $ bundt lib/index.js\n    $ bundt src/browser.js --browser --unpkg\n';
 	return console.log(msg);
@@ -66,6 +67,7 @@ if (!pkg) return console.log('Does not exist: %s', pkgfile);
 
 const argv = process.argv.slice(2);
 if (argv.includes('-h') || argv.includes('--help')) return help();
+const isMin = argv.includes('--minify');
 
 const entry = resolve(!argv[0] || /^-/.test(argv[0]) ? 'src/index.js' : argv.shift());
 if (!existsSync(entry)) return console.error('Does not exist: %s', entry);
@@ -116,10 +118,10 @@ const UMD = isDefault
 
 // Writes
 Promise.all([
-	fields.main && write(fields.main, CJS),
-	fields.module && write(fields.module, ESM),
-	fields.browser && write(fields.browser, ESM),
-	fields.unpkg && write(fields.unpkg, UMD, 1),
+	fields.main && write(fields.main, CJS, isMin),
+	fields.module && write(fields.module, ESM, isMin),
+	fields.browser && write(fields.browser, ESM, isMin),
+	fields.unpkg && write(fields.unpkg, UMD, isMin || 1),
 ].filter(Boolean)).then(arr => {
 	let f=8, s=8, g=6, out='';
 
