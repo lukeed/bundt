@@ -4,6 +4,7 @@
 
 const fs = require('fs');
 const test = require('tape');
+const premove = require('premove');
 const { parse, join } = require('path');
 const { spawnSync } = require('child_process');
 const bin = require.resolve('..');
@@ -35,10 +36,10 @@ function toFiles(t, dir, obj={}) {
 		} else if (k === 'umd' && 'name' in obj) {
 			t.true(data.includes(obj.name), `(${k}) ~> has custom UMD name`);
 		}
-		fs.unlinkSync(file);
+		premove(file);
 	}
 
-	fs.rmdirSync(parse(file).dir);
+	premove(parse(file).dir);
 }
 
 function toTest(dirname) {
