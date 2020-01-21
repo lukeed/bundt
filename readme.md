@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="shots/logo.png" alt="bundt" height="120" />
+  <img src="logo.png" alt="bundt" height="110" />
 </div>
 
 <div align="center">
