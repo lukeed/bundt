@@ -29,7 +29,7 @@ Your code is prepared for release targets ***as written***!
 * Does not transpile your code<br>_AKA – no Babel or Buble_
 * Does not inline dependencies<br>_AKA – no Rollup or Webpack_
 
-If you need either of these, using [`microbundle`](https://github.com/developit/microbundle) comes ***highly recommend***~!
+If you need either of these, using [`microbundle`](https://github.com/developit/microbundle) comes ***highly recommend***!
 
 > Seriously, I write wonky ES5 code in a single file...<br>`bundt` only puts a name to the builder script I copy & paste between libraries.<br>You are 99.9999% more likely to do better with `microbundle` and/or to not outgrow it.
 
