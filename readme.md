@@ -4,13 +4,13 @@
 
 <div align="center">
   <a href="https://npmjs.org/package/bundt">
-    <img src="https://badgen.now.sh/npm/v/bundt" alt="version" />
+    <img src="https://badgen.net/npm/v/bundt" alt="version" />
   </a>
-  <a href="https://travis-ci.org/lukeed/bundt">
-    <img src="https://badgen.now.sh/travis/lukeed/bundt" alt="travis" />
+    <a href="https://github.com/lukeed/bundt/actions">
+    <img src="https://badgen.net/github/status/lukeed/bundt" alt="status" />
   </a>
   <a href="https://npmjs.org/package/bundt">
-    <img src="https://badgen.now.sh/npm/dm/bundt" alt="downloads" />
+    <img src="https://badgen.net/npm/dm/bundt" alt="downloads" />
   </a>
 </div>
 
