@@ -36,10 +36,12 @@ function toFiles(t, dir, obj={}) {
 		} else if (k === 'umd' && 'name' in obj) {
 			t.true(data.includes(obj.name), `(${k}) ~> has custom UMD name`);
 		}
-		premove(file);
 	}
 
-	premove(parse(file).dir);
+	premove(parse(file).dir).then(tmp => {
+		fs.existsSync(tmp = join(dir, 'dist')) && premove(tmp);
+		fs.existsSync(tmp = join(dir, 'foobar')) && premove(tmp);
+	});
 }
 
 function toTest(dirname) {

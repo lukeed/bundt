@@ -66,6 +66,8 @@ Most configuration lives within your `package.json` file. The following keys are
 
 * **"umd:name"** or **"name"** &mdash; the globally exposed name for your UMD factory<br>_You should use an alternate `umd:name` if your `name` is not alphanumeric!_
 
+* **"modes"** &mdash; a map of "mode" names and their entry files<br>_Your `"default"` mode will use the destinations defined above.<br>All other modes replace `dist` with its name as the new directory._
+
 * **"terser"** &mdash; custom [Terser options](https://github.com/terser-js/terser#minify-options) for minification<br>_Alternatively, you may use a `.terserrc` file~!_
 
 

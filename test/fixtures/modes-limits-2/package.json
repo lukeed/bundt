@@ -1,0 +1,11 @@
+{
+  "name": "modes-limits",
+  "unpkg": "dist/modes-limits.min.js",
+  "browser": "dist/modes-limits.client.js",
+  "module": "dist/modes-limits.mjs",
+  "main": "dist/modes-limits.js",
+  "modes": {
+    "default": "src/foo.js",
+    "foobar": "src/bar.js"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "esm": "dist/index.mjs",
+  "argv": [
+    "src/bar.js",
+    "--module"
+  ]
+}

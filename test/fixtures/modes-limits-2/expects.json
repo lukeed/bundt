@@ -1,0 +1,8 @@
+{
+  "esm": "foobar/modes-limits.client.js",
+  "umd": "foobar/modes-limits.min.js",
+  "argv": [
+    "--browser",
+    "--unpkg"
+  ]
+}

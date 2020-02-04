@@ -1,0 +1,8 @@
+{
+  "esm": "dist/modes-limits.client.js",
+  "umd": "dist/modes-limits.min.js",
+  "argv": [
+    "--browser",
+    "--unpkg"
+  ]
+}
