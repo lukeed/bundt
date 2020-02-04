@@ -50,6 +50,9 @@ function toTest(dirname) {
 
 	test(dirname, t => {
 		let pid = exec(dir, expects.entry, expects.argv);
+		if (pid.status) {
+			console.log(pid.stderr.toString());
+		}
 		t.is(pid.status, 0, 'runs without error');
 		t.ok(pid.stdout.length, 'prints table to stdout');
 		console.log(pid.stdout.toString());
