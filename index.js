@@ -79,6 +79,7 @@ const argv = process.argv.slice(2);
 if (argv.includes('-h') || argv.includes('--help')) return help();
 const isMin = argv.includes('--minify');
 
+const isIndex = !argv[0] || /^-/.test(argv[0]);
 const entry = resolve(!argv[0] || /^-/.test(argv[0]) ? 'src/index.js' : argv.shift());
 if (!existsSync(entry) && !pkg.modes) return bail(`File not found: ${entry}`);
 
@@ -163,7 +164,7 @@ function run(filepath, isMode) {
 	});
 }
 
-if (pkg.modes && entry.endsWith('src/index.js')) {
+if (pkg.modes && isIndex) {
 	Promise.all(
 		Object.keys(pkg.modes).map(k => {
 			return run(pkg.modes[k], k);
