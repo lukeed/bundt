@@ -2,7 +2,7 @@
   "name": "bundt",
   "version": "0.4.0",
   "repository": "lukeed/bundt",
-  "description": "WIP",
+  "description": "A simple bundler for your delcious modules~!",
   "license": "MIT",
   "bin": {
     "bundt": "index.js"
@@ -21,7 +21,12 @@
   "engines": {
     "node": ">=6"
   },
-  "keywords": [],
+  "keywords": [
+    "bundler",
+    "release",
+    "library",
+    "targets"
+  ],
   "dependencies": {
     "kleur": "^3.0.1",
     "mk-dirs": "^1.0.0",
