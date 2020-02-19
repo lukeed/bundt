@@ -74,3 +74,7 @@ Most configuration lives within your `package.json` file. The following keys are
 ## License
 
 MIT © [Luke Edwards](https://lukeed.com)
+
+<hr>
+
+<sup><em>Logo by [iconicbestiary](https://www.freepik.com/free-vector/various-desserts-bakery_1310918.htm#page=2&position=38)</em></sup>
