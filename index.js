@@ -128,7 +128,7 @@ function run(filepath, isMode) {
 
 	if (keys.length > 0) {
 		keys.sort().forEach(key => {
-			CJS += `\nexports.${key} = ${key};`;
+			CJS += `\nmodule.exports.${key} = ${key};`;
 		});
 	}
 
