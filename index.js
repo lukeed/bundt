@@ -118,13 +118,17 @@ function run(filepath, isMode) {
 	const isDefault = /export default/.test(ESM);
 
 	let CJS = imports(ESM)
-		.replace(/(^|\s|;)export default/, '$1module.exports =')
+		.replace(/(^|\s|;)export default/, '$1var __defaultExport =')
 		.replace(/(^|\s|;)export (const|(?:async )?function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, x, type, name) => {
 			return keys.push(name) && `${x}${type} ${name}`;
 		})
 		.replace(/(^|\s|;)export \{(.+?)}(?=(;|\s|$))/, (_, x, names) => {
-			return keys.push(...(names.split(',').map(name => name.trim()))) && x;
+			return keys.push(...(names.split(',').map(name => name.trim()))) && '';
 		});
+
+	if (isDefault) {
+		CJS += `\nmodule.exports = __defaultExport;\nmodule.exports.default = __defaultExport;`
+	}
 
 	if (keys.length > 0) {
 		keys.sort().forEach(key => {
