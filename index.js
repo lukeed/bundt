@@ -120,7 +120,7 @@ function run(filepath, isMode) {
 
 	let CJS = imports(ESM)
 		.replace(/(^|\s|;)export default/, '$1module.exports =')
-		.replace(/(^|\s|;)export (const|function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, x, type, name) => {
+		.replace(/(^|\s|;)export (const|(?:async )?function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, x, type, name) => {
 			return keys.push(name) && `${x}${type} ${name}`;
 		});
 

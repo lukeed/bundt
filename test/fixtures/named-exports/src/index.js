@@ -4,6 +4,10 @@ export function foo(a) {
 
 export const bar = b => b + b;
 
+export async function baz(a) {
+	return a + a;
+}
+
 export let hello = 'world';
 
 export var abc = 123;
