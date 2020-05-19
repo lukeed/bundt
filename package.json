@@ -1,6 +1,6 @@
 {
   "name": "bundt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": "lukeed/bundt",
   "description": "A simple bundler for your delcious modules~!",
   "license": "MIT",
