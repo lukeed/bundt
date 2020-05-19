@@ -3,12 +3,13 @@
 //   so that each can run custom assertions!
 
 const fs = require('fs');
-const test = require('tape');
-const premove = require('premove');
-const { parse, join } = require('path');
+const { join } = require('path');
+const assert = require('uvu/assert');
 const { spawnSync } = require('child_process');
-const bin = require.resolve('..');
+const premove = require('premove');
+const { test } = require('uvu');
 
+const bin = require.resolve('..');
 const fixtures = join(__dirname, 'fixtures');
 
 const tests = {
@@ -22,44 +23,35 @@ function exec(cwd, src, flags=[]) {
 	return spawnSync('node', args, { cwd });
 }
 
-function toFiles(t, dir, obj={}) {
-	let k, file, data;
-
-	for (k in obj) {
-		if (/entry|name|argv/.test(k)) continue;
-		file = join(dir, obj[k]);
-		t.true(fs.existsSync(file), `(${k}) ~> file exists`);
-		data = fs.readFileSync(file, 'utf8');
-		t.true(tests[k].test(data), `(${k}) ~> contents look right`);
-		if (k === 'cjs') {
-			t.doesNotThrow(() => new Function(data), SyntaxError, `(${k}) ~> does not throw`);
-		} else if (k === 'umd' && 'name' in obj) {
-			t.true(data.includes(obj.name), `(${k}) ~> has custom UMD name`);
-		}
-	}
-
-	premove(parse(file).dir).then(tmp => {
-		fs.existsSync(tmp = join(dir, 'dist')) && premove(tmp);
-		fs.existsSync(tmp = join(dir, 'foobar')) && premove(tmp);
-	});
-}
-
-function toTest(dirname) {
+fs.readdirSync(fixtures).forEach(dirname => {
 	let dir = join(fixtures, dirname);
 	let expects = require( join(dir, 'expects.json') );
 
-	test(dirname, t => {
+	test(dirname, async () => {
 		let pid = exec(dir, expects.entry, expects.argv);
-		t.is(pid.status, 0, 'runs without error');
-		t.ok(pid.stdout.length, 'prints table to stdout');
-		toFiles(t, dir, expects);
-		t.end();
+		assert.ok(pid.stdout.length, 'prints table to stdout');
+		assert.is(pid.status, 0, 'runs without error');
+
+		for (let k in expects) {
+			if (/entry|name|argv/.test(k)) continue;
+
+			let file = join(dir, expects[k]);
+			assert.ok(fs.existsSync(file), `(${k}) ~> file exists`);
+
+			let data = fs.readFileSync(file, 'utf8');
+			assert.ok(tests[k].test(data), `(${k}) ~> contents look right`);
+
+			if (k === 'cjs') {
+				assert.not.throws(() => new Function(data), SyntaxError);
+			} else if (k === 'umd' && 'name' in expects) {
+				assert.ok(data.includes(expects.name), `(${k}) ~> has custom UMD name`);
+			}
+		}
+
+		let tmp;
+		if (fs.existsSync(tmp = join(dir, 'dist'))) await premove(tmp);
+		if (fs.existsSync(tmp = join(dir, 'foobar'))) await premove(tmp);
 	});
-}
-
-// --- init
-
-fs.readdir(fixtures, (err, dirs) => {
-	if (err) throw err;
-	dirs.forEach(toTest);
 });
+
+test.run();
