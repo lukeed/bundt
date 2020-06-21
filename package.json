@@ -28,13 +28,13 @@
     "targets"
   ],
   "dependencies": {
-    "kleur": "^3.0.1",
-    "mk-dirs": "^1.0.0",
+    "kleur": "^4.0.0",
+    "mk-dirs": "^2.0.0",
     "rewrite-imports": "^2.0.0",
-    "terser": "^4.6.0"
+    "terser": "^4.8.0"
   },
   "devDependencies": {
-    "premove": "^1.0.0",
-    "uvu": "^0.0.6"
+    "premove": "^2.0.0",
+    "uvu": "^0.0.14"
   }
 }
