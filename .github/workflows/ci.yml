@@ -25,7 +25,7 @@ jobs:
         npm install -g nyc
 
     - name: Test w/ Coverage
-      run: npx nyc --include=src npm test
+      run: npx nyc npm test
 
     - name: Report
       if: matrix.nodejs >= 14 && matrix.os == 'ubuntu-latest'
