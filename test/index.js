@@ -48,9 +48,8 @@ fs.readdirSync(fixtures).forEach(dirname => {
 			}
 		}
 
-		let tmp;
-		if (fs.existsSync(tmp = join(dir, 'dist'))) await premove(tmp);
-		if (fs.existsSync(tmp = join(dir, 'foobar'))) await premove(tmp);
+		await premove('dist', { cwd: dir });
+		await premove('foobar', { cwd: dir });
 	});
 });
 
