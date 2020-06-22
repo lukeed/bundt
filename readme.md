@@ -3,11 +3,11 @@
 </div>
 
 <div align="center">
+  <a href="https://github.com/lukeed/bundt/actions">
+    <img src="https://github.com/lukeed/bundt/workflows/CI/badge.svg" alt="CI" />
+  </a>
   <a href="https://npmjs.org/package/bundt">
     <img src="https://badgen.net/npm/v/bundt" alt="version" />
-  </a>
-    <a href="https://github.com/lukeed/bundt/actions">
-    <img src="https://badgen.net/github/status/lukeed/bundt" alt="status" />
   </a>
   <a href="https://npmjs.org/package/bundt">
     <img src="https://badgen.net/npm/dm/bundt" alt="downloads" />
