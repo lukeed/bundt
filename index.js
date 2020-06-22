@@ -36,12 +36,11 @@ function write(file, data, isUMD, toDir) {
 	if (toDir && toDir !== 'default') {
 		file = normalize(file.replace(dirname(file), toDir));
 	}
-	return mkdir(dirname(file)).then(() => {
-		let { code } = minify(data, Object.assign({ toplevel:!isUMD }, terser));
-		writeFileSync(file, isUMD ? code : data);
-		let gzip = size(gzipSync(code).length);
-		return { file, size:size(code.length), gzip };
-	});
+	mkdirs(dirname(file)); // sync
+	let { code } = minify(data, Object.assign({ toplevel:!isUMD }, terser));
+	writeFileSync(file, isUMD ? code : data);
+	let gzip = size(gzipSync(code).length);
+	return { file, size: size(code.length), gzip };
 }
 
 function help() {
@@ -85,8 +84,8 @@ if (!existsSync(entry) && !pkg.modes) return bail(`File not found: ${entry}`);
 
 // We'll actually do something – require deps
 const imports = require('rewrite-imports');
+const mkdirs = require('mk-dirs/sync');
 const { minify } = require('terser');
-const mkdir = require('mk-dirs');
 
 // Parsed config
 const fields = {
