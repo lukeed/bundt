@@ -1,0 +1,6 @@
+{
+  "name": "named-exports",
+  "unpkg": "dist/curly-named.min.js",
+  "module": "dist/curly-named.mjs",
+  "main": "dist/curly-named.js"
+}
