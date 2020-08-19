@@ -6,7 +6,7 @@ const fs = require('fs');
 const { join } = require('path');
 const assert = require('uvu/assert');
 const { spawnSync } = require('child_process');
-const premove = require('premove');
+const { premove } = require('premove');
 const { test } = require('uvu');
 
 const bin = require.resolve('..');

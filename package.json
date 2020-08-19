@@ -34,7 +34,7 @@
     "terser": "^4.8.0"
   },
   "devDependencies": {
-    "premove": "^2.0.0",
+    "premove": "^3.0.0",
     "uvu": "^0.3.0"
   }
 }
