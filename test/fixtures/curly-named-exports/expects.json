@@ -1,0 +1,5 @@
+{
+  "cjs": "dist/curly-named.js",
+  "esm": "dist/curly-named.mjs",
+  "umd": "dist/curly-named.min.js"
+}
