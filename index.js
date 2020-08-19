@@ -39,7 +39,7 @@ function write(file, data, isUMD, toDir) {
 	} else if (toDir && toDir !== 'default') {
 		file = normalize(file.replace(dirname(file), toDir));
 	}
-	mkdirs(dirname(file)); // sync
+	mkdir(dirname(file)); // sync
 	let code = isDef && data;
 	code = code || minify(data, Object.assign({ toplevel:!isUMD }, terser)).code;
 	writeFileSync(file, isUMD ? code : data);
@@ -88,7 +88,7 @@ if (!existsSync(entry) && !pkg.modes) return bail(`File not found: ${entry}`);
 
 // We'll actually do something – require deps
 const imports = require('rewrite-imports');
-const mkdirs = require('mk-dirs/sync');
+const { mkdir } = require('mk-dirs/sync');
 const { minify } = require('terser');
 
 // Parsed config
