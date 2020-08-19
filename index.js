@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const { gzipSync } = require('zlib');
+const { dirname, normalize, resolve, join, extname } = require('path');
 const { existsSync, readFileSync, writeFileSync } = require('fs');
-const { dirname, normalize, resolve } = require('path');
 const { white, red, cyan, dim } = require('kleur');
 
 const _ = ' ';
@@ -33,11 +33,15 @@ function size(val=0) {
 
 function write(file, data, isUMD, toDir) {
 	file = normalize(file);
-	if (toDir && toDir !== 'default') {
+	let isDef = /\.d\.ts$/.test(file);
+	if (isDef && toDir !== 'default') {
+		file = join(toDir, file);
+	} else if (toDir && toDir !== 'default') {
 		file = normalize(file.replace(dirname(file), toDir));
 	}
 	mkdirs(dirname(file)); // sync
-	let { code } = minify(data, Object.assign({ toplevel:!isUMD }, terser));
+	let code = isDef && data;
+	code = code || minify(data, Object.assign({ toplevel:!isUMD }, terser)).code;
 	writeFileSync(file, isUMD ? code : data);
 	let gzip = size(gzipSync(code).length);
 	return { file, size: size(code.length), gzip };
@@ -113,6 +117,13 @@ function capitalize(str) {
 function run(filepath, isMode) {
 	if (!existsSync(filepath)) return bail(`File not found: ${entry}`);
 
+	let types = '';
+	if (isMode) {
+		let extn = extname(filepath);
+		types = filepath.replace(extn, '.d.ts');
+		types = existsSync(types) && readFileSync(types, 'utf8');
+	}
+
 	const keys = [];
 	const ESM = readFileSync(filepath, 'utf8');
 	const isDefault = /export default/.test(ESM);
@@ -140,6 +151,7 @@ function run(filepath, isMode) {
 			fields.module && write(fields.module, ESM, isMin, isMode),
 			fields.browser && write(fields.browser, ESM, isMin, isMode),
 			fields.unpkg && write(fields.unpkg, UMD, isMin || 1, isMode),
+			types && write('index.d.ts', types, false, isMode),
 		].filter(Boolean)
 	).then(arr => {
 		let label = capitalize(isMode || 'filename');

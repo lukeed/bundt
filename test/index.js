@@ -35,6 +35,14 @@ fs.readdirSync(fixtures).forEach(dirname => {
 		for (let k in expects) {
 			if (/entry|name|argv/.test(k)) continue;
 
+			if (k === 'exists') {
+				expects[k].forEach(file => {
+					let full = join(dir, file);
+					assert.ok(fs.existsSync(full), `(${file}) ~> file exists`)
+				});
+				continue;
+			}
+
 			let file = join(dir, expects[k]);
 			assert.ok(fs.existsSync(file), `(${k}) ~> file exists`);
 
@@ -48,8 +56,9 @@ fs.readdirSync(fixtures).forEach(dirname => {
 			}
 		}
 
-		await premove('dist', { cwd: dir });
+		await premove('index.d.ts', { cwd: dir });
 		await premove('foobar', { cwd: dir });
+		await premove('dist', { cwd: dir });
 	});
 });
 

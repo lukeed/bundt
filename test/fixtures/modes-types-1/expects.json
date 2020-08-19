@@ -1,0 +1,9 @@
+{
+  "umd": "dist/index.min.js",
+  "esm": "dist/index.mjs",
+  "cjs": "dist/index.js",
+  "exists": [
+    "foobar/index.d.ts",
+    "index.d.ts"
+  ]
+}

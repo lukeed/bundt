@@ -1,0 +1,10 @@
+{
+  "name": "modes",
+  "unpkg": "dist/index.min.js",
+  "module": "dist/index.mjs",
+  "main": "dist/index.js",
+  "modes": {
+    "default": "src/foo.js",
+    "foobar": "src/bar.js"
+  }
+}
