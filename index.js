@@ -139,7 +139,7 @@ function run(filepath, isMode) {
 
 	if (keys.length > 0) {
 		keys.sort().forEach(key => {
-			CJS += `\nmodule.exports.${key} = ${key};`;
+			CJS += `\nexports.${key} = ${key};`;
 		});
 	}
 
