@@ -134,7 +134,8 @@ function run(filepath, isMode) {
 			return keys.push(name) && `${x}${type} ${name}`;
 		})
 		.replace(/(^|\s|;)export \{(.+?)}(?=(;|\s|$))/, (_, x, names) => {
-			return keys.push(...(names.split(',').map(name => name.trim()))) && x;
+			names.split(',').forEach(name => keys.push(name.trim()));
+			return x;
 		});
 
 	if (keys.length > 0) {
