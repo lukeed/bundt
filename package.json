@@ -35,6 +35,6 @@
   },
   "devDependencies": {
     "premove": "^3.0.0",
-    "uvu": "^0.3.0"
+    "uvu": "^0.5.0"
   }
 }
