@@ -108,7 +108,7 @@ if (argv.length > 0) {
 
 const name = pkg['umd:name'] || pkg.name;
 const mount = /(.|-|@)/.test(name) ? `['${name}']` : `.${name}`;
-const terser = pkg.terser || existsSync(rcfile) ? JSON.parse(readFileSync(rcfile)) : {};
+const terser = pkg.terser || (existsSync(rcfile) ? JSON.parse(readFileSync(rcfile)) : {});
 
 function capitalize(str) {
 	return str[0].toUpperCase() + str.substring(1);
