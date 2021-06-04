@@ -23,6 +23,10 @@ function exec(cwd, src, flags=[]) {
 	return spawnSync('node', args, { cwd });
 }
 
+function normalize(contents) {
+	return contents.trim().replace(/\r?\n/g, '\n');
+}
+
 fs.readdirSync(fixtures).forEach(dirname => {
 	let dir = join(fixtures, dirname);
 	let expects = require( join(dir, 'expects.json') );
@@ -53,8 +57,8 @@ fs.readdirSync(fixtures).forEach(dirname => {
 			if (fs.existsSync(output)) {
 				output = fs.readFileSync(output, 'utf8');
 				assert.fixture(
-					data.trim(),
-					output.trim()
+					normalize(data),
+					normalize(output),
 				);
 			}
 
