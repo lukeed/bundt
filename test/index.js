@@ -49,6 +49,15 @@ fs.readdirSync(fixtures).forEach(dirname => {
 			let data = fs.readFileSync(file, 'utf8');
 			assert.ok(tests[k].test(data), `(${k}) ~> contents look right`);
 
+			let output = join(dir, `output.${k}.js`);
+			if (fs.existsSync(output)) {
+				output = fs.readFileSync(output, 'utf8');
+				assert.fixture(
+					data.trim(),
+					output.trim()
+				);
+			}
+
 			if (k === 'cjs') {
 				assert.not.throws(() => new Function(data), SyntaxError);
 			} else if (k === 'umd' && 'name' in expects) {
