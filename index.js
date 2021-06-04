@@ -87,7 +87,7 @@ const entry = resolve(!argv[0] || /^-/.test(argv[0]) ? 'src/index.js' : argv.shi
 if (!existsSync(entry) && !pkg.modes) return bail(`File not found: ${entry}`);
 
 // We'll actually do something – require deps
-const imports = require('rewrite-imports');
+const { rewrite } = require('rewrite-imports');
 const { mkdir } = require('mk-dirs/sync');
 const { minify } = require('terser');
 
@@ -128,7 +128,7 @@ function run(filepath, isMode) {
 	const ESM = readFileSync(filepath, 'utf8');
 	const isDefault = /export default/.test(ESM);
 
-	let CJS = imports(ESM)
+	let CJS = rewrite(ESM)
 		.replace(/(^|\s|;)export default/, '$1module.exports =')
 		.replace(/(^|\s|;)export (const|(?:async )?function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, x, type, name) => {
 			return keys.push(name) && `${x}${type} ${name}`;
