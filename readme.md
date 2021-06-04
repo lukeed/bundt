@@ -14,7 +14,7 @@
   </a>
 </div>
 
-<div align="center">A simple bundler for your delcious modules~!</div>
+<div align="center">A simple bundler for your delicious modules~!</div>
 
 ## Features
 
