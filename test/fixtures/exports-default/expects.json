@@ -1,0 +1,5 @@
+{
+  "cjs": "dist/named.js",
+  "esm": "dist/named.mjs",
+  "umd": "dist/named.min.js"
+}

@@ -128,7 +128,8 @@ function run(filepath, isMode) {
 	const ESM = readFileSync(filepath, 'utf8');
 	const isDefault = /export default/.test(ESM);
 
-	let CJS = rewrite(ESM).replace(/(^|;\s*|\r?\n+)export(?:\s*{([^}]*)}(?:(?:;|\s|$)))?( default)?(?: (const|(?:async )?function|class|let|var)\s+([a-z$_][\w$]*))?(?=([^"'`]*["'`][^"'`]*["'`])*[^"'`]*$)/gi, (raw, ws, names, def, type, name) => {
+	let CJS = rewrite(ESM).replace(/(^|;\s*|\r?\n+)export(?:(?:\s*{([^}]*)}(?:(?:;|\s|$)))|( default)|(?: (const|(?:async )?function|class|let|var))\s+([a-z$_][\w$]*))?(?=([^"'`]*["'`][^"'`]*["'`])*[^"'`]*$)/gi, (raw, ws, names, def, type, name) => {
+		console.log('HERE', { raw, ws, names, def, type, name });
 		if (def) return ws + 'module.exports =';
 		if (type) return keys.push(name) && `${ws}${type} ${name}`;
 		names.split(',').forEach(name => keys.push(name.trim()));

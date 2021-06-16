@@ -1,0 +1,6 @@
+{
+  "name": "named-exports",
+  "unpkg": "dist/named.min.js",
+  "module": "dist/named.mjs",
+  "main": "dist/named.js"
+}
