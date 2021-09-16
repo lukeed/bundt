@@ -31,7 +31,7 @@ function size(val=0) {
 	return out + ' ' + UNITS[exp];
 }
 
-function write(file, data, isUMD, toDir) {
+async function write(file, data, isUMD, toDir) {
 	file = normalize(file);
 	let isDef = /\.d\.ts$/.test(file);
 	if (isDef && toDir !== 'default') {
@@ -41,7 +41,7 @@ function write(file, data, isUMD, toDir) {
 	}
 	mkdir(dirname(file)); // sync
 	let code = isDef && data;
-	code = code || minify(data, Object.assign({ toplevel:!isUMD }, terser)).code;
+	code = code || (await minify(data, Object.assign({ toplevel:!isUMD }, terser))).code;
 	writeFileSync(file, isUMD ? code : data);
 	let gzip = size(gzipSync(code).length);
 	return { file, size: size(code.length), gzip };

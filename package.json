@@ -31,7 +31,7 @@
     "kleur": "^4.0.0",
     "mk-dirs": "^3.0.0",
     "rewrite-imports": "^3.0.0",
-    "terser": "^4.8.0"
+    "terser": "^5.8.0"
   },
   "devDependencies": {
     "premove": "3.0.1",
