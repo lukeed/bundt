@@ -19,7 +19,7 @@
     "test": "uvu test -i fixtures"
   },
   "engines": {
-    "node": ">=6"
+    "node": ">=12"
   },
   "keywords": [
     "bundler",
