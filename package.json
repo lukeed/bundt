@@ -16,7 +16,8 @@
     "url": "https://lukeed.com"
   },
   "scripts": {
-    "test": "uvu test -i fixtures"
+    "test": "uvu test -i fixtures",
+    "unit": "uvu -r tsm src .test.ts"
   },
   "engines": {
     "node": ">=12"
@@ -28,13 +29,16 @@
     "targets"
   ],
   "dependencies": {
+    "esbuild": "^0.14.25",
     "kleur": "^4.0.0",
     "mk-dirs": "^3.0.0",
     "rewrite-imports": "^3.0.0",
     "terser": "^4.8.0"
   },
   "devDependencies": {
+    "@types/node": "17.0.21",
     "premove": "3.0.1",
-    "uvu": "0.5.1"
+    "tsm": "2.2.1",
+    "uvu": "0.5.3"
   }
 }

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": true,
+    "target": "es2020",
+    "moduleResolution": "node",
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "alwaysStrict": true,
+    "module": "esnext",
+    "checkJs": true
+  },
+  "include": [
+    "bin.js",
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
