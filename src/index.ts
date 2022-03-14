@@ -7,9 +7,9 @@ import { dirname, resolve, join } from 'path';
 import * as $ from './utils';
 
 import type { Input } from './types';
-import type { Options } from '..';
+import type { Options, Output } from '..';
 
-export async function build(pkgdir?: string, options?: Options) {
+export async function build(pkgdir: string, options?: Options) {
 	options = options || {};
 	pkgdir = resolve(pkgdir || '.');
 
@@ -19,11 +19,14 @@ export async function build(pkgdir?: string, options?: Options) {
 	let pkg = $.exists(pkgfile) && await $.pkg(pkgfile);
 	if (!pkg) return $.throws('Missing `package.json` file');
 
-	let i=0, encoder = new TextEncoder;
-	let outputs = new Map<string, Input>();
+	let EXTN = /\.([mc]?[tj]sx?)$/;
+	let i=0, key: string; // encoder = new TextEncoder;
+	// let outputs = new Map<string, Input>();
 
 	let inputs = await $.inputs(pkgdir, pkg);
-	console.log({ inputs, pkgdir, pkg });
+	console.log(
+		JSON.stringify({ inputs, pkgdir, pkg }, null, 2)
+	);
 
 	let config: esbuild.BuildOptions = {
 		target: 'es2019', // TODO: --target=es2019
@@ -40,59 +43,90 @@ export async function build(pkgdir?: string, options?: Options) {
 		pkg.external, config.external!
 	);
 
-	console.log({ inputs });
+	let outdirs = new Set<string>();
+	let outfiles = new Set<string>();
+	let outmap: {
+		[input: string]: Set<string>; // output[]
+	} = {};
 
-	for (; i < inputs.length; i++) {
-		outputs.set(inputs[i].output, inputs[i]);
+	for (i=0; i < inputs.length; i++) {
+		let uniq = new Set<string>();
+
+		for (key in inputs[i].output) {
+			let file = join(pkgdir, inputs[i].output[key]);
+			outfiles.add(file);
+			uniq.add(file);
+		}
+
+		outmap[ inputs[i].file ] = uniq;
 	}
+
+	for (key in outfiles) {
+		outdirs.add(dirname(key));
+		// TODO: verify file in "files" array
+	}
+
+	outdirs.delete(pkgdir);
+
+	// purge -> recreate
+	await Promise.all(
+		[...outdirs].sort().map(dir => {
+			// purge existing
+			if ($.exists(dir)) {
+				console.log(" REMOVING %s DIR", dir);
+				// await $.rm(outdir, {
+				// 	recursive: true,
+				// 	force: true,
+				// });
+			}
+
+			// safe writes
+			return $.mkdir(dir);
+		})
+	);
+
+	let results: Output = {};
+	let isModule = pkg.module;
+	// let isIMPORT = /(^|.)import(.|)/i;
 
 	// TODO :: try/catch
 	await Promise.all(
-		[...outputs.values()].map(async opts => {
-			let outfile = join(pkgdir!, opts.output);
+		inputs.map(async input => {
+			let file = input.file;
+
+			// TODO: respect "types" condition for output, else outdir
+			// TODO: check `*.d.ts` existence; add to outmap
+			// let dts: string|false = file.replace(EXTN, '.d.ts');
+			// dts = $.exists(dts) && dts;
+
+			// let outfile = join(pkgdir!, input.output);
 
 			// build ts -> esm
 			let esm = await esbuild.build({
 				...config,
 				// force these
 				write: false,
+				entryPoints: [file],
 				format: 'esm',
-				outfile: outfile,
-				entryPoints: [opts.input],
 				bundle: true,
 			}).then(bundle => {
 				return bundle.outputFiles[0];
 			});
 
-			let outdir = dirname(esm.path);
-			console.log({ outdir  });
-
-			if (outdir !== pkgdir) {
-				// purge existing
-				if ($.exists(outdir)) {
-					console.log(" REMOVING %s DIR", outdir);
-					// await $.rm(outdir, {
-					// 	recursive: true,
-					// 	force: true,
-					// });
+			// write file(s) if "import" found
+			// look for sibling "require" for ESM~>CJS
+			for (let c in input.output) {
+				if ($.isModule(input.output[c], isModule)) {
+					console.log('~> WRITE', input.output[c]);
 				}
-
-				// create dir (safe writes)
-				await $.mkdir(outdir);
 			}
 
-			if (opts.esm) {
-				await $.write(esm.path, esm.contents);
-			} else {
-				// convert esm -> cjs
-				outfile = join(pkgdir!, outfile);
-				await $.write(outfile, '// COMMONJS');
-			}
-
-			// TODO: index.d.ts
+			results[file] = Array.from(outmap[file]);
 		})
 	);
 
-	console.log('~> done', [...outputs]);
+	console.log('~> done', [...inputs]);
+
+	return results;
 	// utils.table(pkg.name, pkgdir, outputs);
 }

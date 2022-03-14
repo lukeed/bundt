@@ -12,10 +12,13 @@
     "noImplicitAny": true,
     "alwaysStrict": true,
     "module": "esnext",
-    "checkJs": true
+    "checkJs": true,
+    "noEmit": true
   },
   "include": [
-    "bin.js",
+    "*.js",
+    "*.d.ts",
+    "test",
     "src"
   ],
   "exclude": [

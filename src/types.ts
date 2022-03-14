@@ -39,8 +39,6 @@ export namespace Normal {
 }
 
 export type Input = {
-	input: string;
-	output: string;
-	condition: string;
-	esm: boolean;
+	file: string;
+	output: Normal.Conditions;
 }

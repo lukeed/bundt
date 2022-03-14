@@ -52,18 +52,13 @@ export async function pkg(file: string): Promise<Normal.Package> {
 	for (key in x.devDependencies) arr.push(key);
 	for (key in x.dependencies) arr.push(key);
 
-	let output: Normal.Package = {
+	return {
 		name: x.name,
 		files: x.files || [],
 		module: x.type === 'module',
+		exports: entries(x),
 		external: arr,
-		exports: {},
 	};
-
-	output.exports = entries(x);
-	console.log('~> after', output.exports);
-
-	return output;
 }
 
 export function isModule(file: string, isESM: boolean): boolean {
@@ -74,50 +69,38 @@ export function isModule(file: string, isESM: boolean): boolean {
 const isJS = /\.[mc]?jsx?$/i;
 
 export function flatten(
-	input: Raw.Conditions,
 	output: Normal.Conditions,
-	prefix: string
-): Normal.Conditions {
-	if (typeof input === 'string') {
-		if (isJS.test(input)) {
-			output.default = input;
+	value: Raw.Conditions,
+	cond?: string
+): void {
+	if (value == null) return;
+
+	if (typeof value === 'string') {
+		if (isJS.test(value) && !value.includes('*')) {
+			output[cond || 'default'] = value;
 		}
-		return output;
-	}
+	} else {
+		let prefix = cond ? (cond + '.') : '';
 
-	let tmp: Raw.Conditions;
-	let pfx = prefix ? (prefix + '.') : prefix;
-	let key: string;
-
-	for (key in input) {
-		tmp = input[key];
-		if (typeof tmp === 'string') {
-			if (isJS.test(tmp)) {
-				output[pfx+key] = tmp;
-			}
-		} else if (tmp) {
-			flatten(tmp, output, pfx+key);
+		for (let key in value) {
+			if (key.includes('*')) continue;
+			if (value[key]) flatten(output, value[key], prefix + key);
 		}
 	}
-
-	return output;
 }
 
 export function entries(pkg: Raw.Package): Normal.Exports {
 	let output: Normal.Exports = {};
-	console.log('>>> ENTRIES', pkg);
 
 	// "exports": "./foobar.mjs"
 	if (typeof pkg.exports === 'string') {
-		console.log('IS STRING');
-
-		if (isJS.test(pkg.exports)) {
-			output['.'] = { default: pkg.exports };
-		}
+		if (isJS.test(pkg.exports)) output['.'] = {
+			default: pkg.exports
+		};
 	} else {
-		let k: string;
 		let isPath = false;
-		let tmp: Raw.Conditions;
+		let x: string, k: string;
+		let tmp: Normal.Conditions;
 
 		for (k in pkg.exports) {
 			isPath = k.startsWith('.');
@@ -128,13 +111,18 @@ export function entries(pkg: Raw.Package): Normal.Exports {
 			for (k in pkg.exports) {
 				// remove this? or expand it
 				if (k.includes('*')) continue;
-				if (tmp = pkg.exports![k]) {
-					output[k] = flatten(tmp, {}, '');
+				flatten(tmp={}, pkg.exports![k], '');
+				for (x in tmp) {
+					output[k] = tmp;
+					break;
 				}
 			}
 		} else {
-			tmp = pkg.exports as Raw.Conditions;
-			output['.'] = flatten(tmp, {}, '');
+			flatten(tmp={}, pkg.exports!, '');
+			for (k in tmp) {
+				output['.'] = tmp;
+				break;
+			}
 		}
 	}
 
@@ -142,19 +130,17 @@ export function entries(pkg: Raw.Package): Normal.Exports {
 }
 
 export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]> {
-	let output: Input[] = [];
+	let inputs: Input[] = [];
 
 	let paths = Object.keys(pkg.exports);
-	if (paths.length < 1) return output;
+	if (paths.length < 1) return inputs;
 
 	let src = join(dir, 'src');
 	src = exists(src) ? src : dir;
 	let files = await ls(src);
 
+	let i=0, j=0, conds: Normal.Conditions;
 	let entry: string, file: string, rgx: RegExp;
-	let i=0, j=0, c: string, conds: Normal.Conditions;
-
-	console.log('>>', { src, files, paths, pkg });
 
 	for (paths.sort(); i < paths.length; i++) {
 		entry = paths[i];
@@ -170,17 +156,9 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 		}
 
 		file = files[j] && join(src, files[j]);
-		if (!file) return throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
-
-		for (c in conds) {
-			output.push({
-				input: file,
-				condition: c,
-				output: conds[c],
-				esm: isModule(conds[c], pkg.module),
-			});
-		}
+		if (file) inputs.push({ file, output: conds });
+		else throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
 	}
 
-	return output;
+	return inputs;
 }

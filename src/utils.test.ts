@@ -202,9 +202,9 @@ flatten('should be a function', () => {
 });
 
 flatten('should handle shallow conditions', () => {
-	let foobar = {};
-	let output = utils.flatten('./x.js', foobar, '');
-	assert.is(output, foobar);
+	let output = {};
+	let foo = utils.flatten(output, './x.js', '');
+	assert.is(foo, undefined);
 
 	assert.equal(output, {
 		default: './x.js'
@@ -214,10 +214,10 @@ flatten('should handle shallow conditions', () => {
 		default: './foo.js'
 	};
 
-	assert.equal(
-		utils.flatten(input, {}, ''),
-		{ default: './foo.js' }
-	);
+	utils.flatten(output={}, input, '');
+	assert.equal(output, {
+		default: './foo.js'
+	});
 
 	input = {
 		default: './foo.js',
@@ -225,14 +225,12 @@ flatten('should handle shallow conditions', () => {
 		import: './i.mjs',
 	};
 
-	assert.equal(
-		utils.flatten(input, {}, ''),
-		{
-			default: './foo.js',
-			require: './r.cjs',
-			import: './i.mjs',
-		}
-	);
+	utils.flatten(output={}, input, '');
+	assert.equal(output, {
+		default: './foo.js',
+		require: './r.cjs',
+		import: './i.mjs',
+	});
 });
 
 flatten('should flatten nested conditions', () => {
@@ -257,7 +255,8 @@ flatten('should flatten nested conditions', () => {
 		require: './r.cjs'
 	};
 
-	let output = utils.flatten($exports, {}, '');
+	let output = {};
+	utils.flatten(output, $exports, '');
 
 	assert.equal(output, {
 		'browser.production.import': './b.min.mjs',
@@ -287,7 +286,7 @@ flatten('should ignore non-JS extensions', () => {
 	};
 
 	let output = {};
-	utils.flatten(input, output, '');
+	utils.flatten(output, input, '');
 
 	assert.equal(output, {
 		'browser.require': './b.js',
@@ -380,9 +379,7 @@ entries('should handle complex "exports" mapping', () => {
 			'browser.require': './foo/b.cjs',
 			'node.import': './foo/n.mjs',
 			'node.require': './foo/n.cjs',
-		},
-		// TODO: remove me
-		'./package.json': {}
+		}
 	});
 });
 
