@@ -4,11 +4,15 @@
   "repository": "lukeed/bundt",
   "description": "A simple bundler for your delcious modules~!",
   "license": "MIT",
-  "bin": {
-    "bundt": "index.js"
+  "bin": "bin.js",
+  "exports": {
+    ".": "./index.mjs",
+    "./package.json": "./package.json"
   },
   "files": [
-    "*.js"
+    "bin.js",
+    "index.d.ts",
+    "index.mjs"
   ],
   "author": {
     "name": "Luke Edwards",

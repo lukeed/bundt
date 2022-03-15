@@ -19,7 +19,6 @@ export async function build(pkgdir: string, options?: Options) {
 	let pkg = $.exists(pkgfile) && await $.pkg(pkgfile);
 	if (!pkg) return $.throws('Missing `package.json` file');
 
-	let EXTN = /\.([mc]?[tj]sx?)$/;
 	let i=0, key: string; // encoder = new TextEncoder;
 	// let outputs = new Map<string, Input>();
 
@@ -29,11 +28,11 @@ export async function build(pkgdir: string, options?: Options) {
 	);
 
 	let config: esbuild.BuildOptions = {
-		target: 'es2019', // TODO: --target=es2019
-		treeShaking: true, // TODO: --minify || !condition.has(development)
-		sourcemap: false, // TODO: --sourcemap
+		target: 'es2019',
+		treeShaking: true, // TODO: !condition.has(development)
+		sourcemap: false,
 		logLevel: 'warning',
-		minify: true, // TODO: --minify or !condition.has(production)
+		minify: true, // TODO: !condition.has(production)
 		charset: 'utf8',
 		...options,
 		external: options.external || [],

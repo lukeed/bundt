@@ -2,19 +2,15 @@ import * as fs from 'fs';
 import { minify } from 'terser';
 import * as esbuild from 'esbuild';
 
-async function build(
-	input: string,
-	output: string,
-	options: esbuild.BuildOptions
-) {
+async function build(input: string, output: string, format: esbuild.Format) {
 	try {
 		var result = await esbuild.build({
-			...options,
+			minify: true,
+			format: format,
 			entryPoints: [input],
 			logLevel: 'warning',
 			target: 'es2020',
 			write: false,
-			minify: true,
 		});
 		if (result.errors.length > 0) {
 			process.exitCode = 1;
@@ -40,6 +36,7 @@ async function build(
 	}
 }
 
-await build('src/index.ts', 'index.mjs', {
-	format: 'esm'
-});
+console.log('');
+await build('src/index.ts', 'index.mjs', 'esm');
+await build('src/bin.ts', 'bin.js', 'cjs');
+console.log('');

@@ -10,3 +10,4 @@ dist
 
 # generated
 /index.mjs
+/bin.js
