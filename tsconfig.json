@@ -16,7 +16,7 @@
     "noEmit": true
   },
   "include": [
-    "*.js",
+    "*.ts",
     "*.d.ts",
     "test",
     "src"

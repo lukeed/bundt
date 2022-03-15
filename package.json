@@ -16,6 +16,7 @@
     "url": "https://lukeed.com"
   },
   "scripts": {
+    "build": "tsm build.ts",
     "test": "uvu test -i fixtures",
     "unit": "uvu -r tsm src .test.ts"
   },

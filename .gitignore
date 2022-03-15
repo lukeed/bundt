@@ -7,3 +7,6 @@ node_modules
 # tests
 build
 dist
+
+# generated
+/index.mjs
