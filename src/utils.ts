@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { join } from 'path';
+import { createHash } from 'crypto';
 
 import type { Input, Normal, Raw } from './types';
 
@@ -161,4 +162,34 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 	}
 
 	return inputs;
+}
+/**
+ * alphasort object/array recursively
+ * fingerprint the object for bundle identity
+ */
+export function fingerprint<T extends object>(input: T): string {
+	let i=0, tmp: unknown, sha=createHash('sha256');
+	let keys = Object.keys(input) as Array<keyof T>;
+
+	if (Array.isArray(input)) {
+		for (; i < input.length; i++) {
+			if ((tmp=input[i]) && typeof tmp === 'object') {
+				input[i] = fingerprint(tmp);
+			}
+		}
+		input.sort();
+	} else {
+		keys.sort();
+	}
+
+	for (i=0; i < keys.length; i++) {
+		tmp = input[ keys[i] ];
+		if (tmp && typeof tmp === 'object') {
+			sha.update( fingerprint(tmp) );
+		} else if (tmp != null) {
+			sha.update(keys[i] + ':' + tmp);
+		}
+	}
+
+	return sha.digest('hex');
 }
