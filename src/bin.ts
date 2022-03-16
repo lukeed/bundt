@@ -16,9 +16,9 @@ type Argv = Record<string, string|true>;
 			key = argv[i];
 			if (key.charCodeAt(1) !== 45) {
 				for (j=key.length-1; j-- > 1;) {
-					flags[key[j]] = true;
+					flags['-'+key[j]] = true;
 				}
-				key = key[key.length-1];
+				key = '-'+key[key.length-1];
 			}
 		} else {
 			if (key) flags[key] = argv[i];
@@ -52,13 +52,13 @@ type Argv = Record<string, string|true>;
 	}
 
 	// ensure boolean flags dont hoard value
-	let minify = flags['minify'] || flags['m'];
-	let sourcemap = flags['sourcemap'] || flags['x'];
+	let minify = flags['--minify'] || flags['-m'];
+	let sourcemap = flags['--sourcemap'] || flags['-x'];
 	if (typeof minify == 'string') input.unshift(minify);
 	if (typeof sourcemap == 'string') input.unshift(sourcemap);
 
 	const { resolve } = require('path');
-	const bundt = require('.');
+	const bundt = await import('bundt');
 
 	let options: Options = {};
 	if (sourcemap) options.sourcemap = true;
@@ -75,6 +75,8 @@ type Argv = Record<string, string|true>;
 })().catch(err => {
 	let msg = err && err.message || err;
 	msg = msg ? msg.replace(/(\r?\n)/g, '$1      ') : 'Unknown error';
-	console.error(red().bold('bundt'), msg);
+	console.error('[bundt]', msg);
+
+	// console.error(red().bold('bundt'), msg);
 	process.exit(1);
-})
+});
