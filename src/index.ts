@@ -2,7 +2,6 @@
 import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
 import { dirname, resolve, join } from 'path';
-// import { existsSync, readFileSync, writeFileSync } from 'fs';
 // import { white, red, cyan, dim } from 'kleur';
 import * as $ from './utils';
 
@@ -20,20 +19,19 @@ export async function build(pkgdir: string, options?: Options) {
 	if (!pkg) return $.throws('Missing `package.json` file');
 
 	let i=0, key: string; // encoder = new TextEncoder;
-	// let outputs = new Map<string, Input>();
-
 	let inputs = await $.inputs(pkgdir, pkg);
-	console.log(
-		JSON.stringify({ inputs, pkgdir, pkg }, null, 2)
-	);
+
+	// TODO: find/load config file here
+
+	let builds: Record<string, ReturnType<typeof $.bundle>> = {};
 
 	let config: esbuild.BuildOptions = {
 		target: 'es2019',
-		treeShaking: true, // TODO: !condition.has(development)
 		sourcemap: false,
+		treeShaking: true,
 		logLevel: 'warning',
-		minify: true, // TODO: !condition.has(production)
 		charset: 'utf8',
+		minify: false,
 		...options,
 		external: options.external || [],
 	};
@@ -42,90 +40,103 @@ export async function build(pkgdir: string, options?: Options) {
 		pkg.external, config.external!
 	);
 
-	let outdirs = new Set<string>();
 	let outfiles = new Set<string>();
-	let outmap: {
+	let mapping: {
 		[input: string]: Set<string>; // output[]
 	} = {};
 
+	let isDEV = /(^|.)development(.|$)/;
+	let isPROD = /(^|.)production(.|$)/;
+	let isTYPES = /(^|.)types(.|$)/;
+
+	let [isREQUIRE, isIMPORT] = pkg.module
+		? [/(^|.)(require)(.|$)/, /(^|.)(import|default)(.|$)/]
+		: [/(^|.)(require|default)(.|$)/, /(^|.)(import)(.|$)/];
+
+	// let isBROWSER = /(^|.)browser(.|$)/;
+	// let isNODE = /(^|.)node(.|$)/;
+
 	for (i=0; i < inputs.length; i++) {
-		let uniq = new Set<string>();
+		let entry = inputs[i].file;
+		let targets = new Set<string>();
+		let conditions = inputs[i].output;
 
-		for (key in inputs[i].output) {
-			let file = join(pkgdir, inputs[i].output[key]);
-			outfiles.add(file);
-			uniq.add(file);
-		}
+		for (key in conditions) {
+			let outfile = join(pkgdir, conditions[key]);
+			let isRepeat = outfiles.has(outfile);
+			let outdir = dirname(outfile);
 
-		outmap[ inputs[i].file ] = uniq;
-	}
-
-	for (key in outfiles) {
-		outdirs.add(dirname(key));
-		// TODO: verify file in "files" array
-	}
-
-	outdirs.delete(pkgdir);
-
-	// purge -> recreate
-	await Promise.all(
-		[...outdirs].sort().map(dir => {
-			// purge existing
-			if ($.exists(dir)) {
-				console.log(" REMOVING %s DIR", dir);
-				// await $.rm(outdir, {
-				// 	recursive: true,
-				// 	force: true,
-				// });
+			if ($.exists(outdir) && outdir !== pkgdir) {
+				console.log(" REMOVING %s DIR", outdir);
+				// await $.rm(outdir, { recursive: true });
 			}
 
-			// safe writes
-			return $.mkdir(dir);
-		})
+			if (isTYPES.test(key)) {
+				// TODO, w/ isDONE marker
+			} else {
+				let local = { ...config };
+				local.minify = local.minify || isPROD.test(key);
+				local.sourcemap = local.sourcemap ?? isDEV.test(key);
+				console.log({ local });
+
+
+				// console.log('[TODO] user config', key, entry, config);
+				console.log('[TODO] user config', entry, key);
+
+				// force these
+				local.write = false;
+				local.entryPoints = [entry];
+				local.format = 'esm';
+				local.bundle = true;
+
+				delete local.outfile;
+
+				let hash = $.fingerprint(local);
+				let bundle = builds[hash];
+
+				if (bundle) {
+					//
+				} else if (isRepeat) {
+					return $.throws(`Generating "${conditions[key]}" output using different configurations!`);
+				} else {
+					builds[hash] = bundle = $.bundle(local);
+				}
+
+				let outputs = await bundle;
+
+				if (!outputs) {
+					process.exitCode = 1;
+					continue;
+				}
+
+				if (isIMPORT.test(key)) {
+					console.log('> WRITE ESM', key);
+					await $.write(outfile, outputs);
+				} else if (isREQUIRE.test(key)) {
+					console.log('>> CONVERT ESM->CJS', key);
+				}
+
+				// console.log({ key, outputs, rewrite: toCommonJS.has(key) });
+			}
+
+			// mark as seen
+			outfiles.add(outfile);
+			targets.add(outfile);
+		}
+
+		mapping[entry] = targets;
+	}
+
+	console.log('here:', Object.keys(builds));
+
+	await Promise.all(
+		Object.values(builds)
 	);
 
 	let results: Output = {};
-	let isModule = pkg.module;
-	// let isIMPORT = /(^|.)import(.|)/i;
-
-	// TODO :: try/catch
-	await Promise.all(
-		inputs.map(async input => {
-			let file = input.file;
-
-			// TODO: respect "types" condition for output, else outdir
-			// TODO: check `*.d.ts` existence; add to outmap
-			// let dts: string|false = file.replace(EXTN, '.d.ts');
-			// dts = $.exists(dts) && dts;
-
-			// let outfile = join(pkgdir!, input.output);
-
-			// build ts -> esm
-			let esm = await esbuild.build({
-				...config,
-				// force these
-				write: false,
-				entryPoints: [file],
-				format: 'esm',
-				bundle: true,
-			}).then(bundle => {
-				return bundle.outputFiles[0];
-			});
-
-			// write file(s) if "import" found
-			// look for sibling "require" for ESM~>CJS
-			for (let c in input.output) {
-				if ($.isModule(input.output[c], isModule)) {
-					console.log('~> WRITE', input.output[c]);
-				}
-			}
-
-			results[file] = Array.from(outmap[file]);
-		})
-	);
-
-	console.log('~> done', [...inputs]);
-
+	Object.keys(mapping).sort().forEach(key => {
+		results[key] = [...mapping[key]];
+	});
+	console.log({ results });
 	return results;
-	// utils.table(pkg.name, pkgdir, outputs);
 }

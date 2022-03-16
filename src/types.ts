@@ -40,5 +40,6 @@ export namespace Normal {
 
 export type Input = {
 	file: string;
+	types: string | null;
 	output: Normal.Conditions;
 }

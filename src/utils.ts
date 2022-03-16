@@ -1,12 +1,13 @@
 import * as fs from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { createHash } from 'crypto';
+import * as esbuild from 'esbuild';
 
 import type { Input, Normal, Raw } from './types';
 
 export const rm = fs.promises.rm;
 export const mkdir = fs.promises.mkdir;
-export const write = fs.promises.writeFile;
+// export const write = fs.promises.writeFile;
 export const exists = fs.existsSync;
 
 export function ls(dir: string) {
@@ -15,6 +16,23 @@ export function ls(dir: string) {
 
 export function throws(msg: string): never {
 	throw new Error(msg);
+}
+
+export function write(entry: string, files: esbuild.OutputFile[]) {
+	let dir = dirname(entry);
+
+	if (files.length > 0) {
+		exists(dir) || fs.mkdirSync(dir, { recursive: true });
+	}
+
+	return Promise.all(
+		files.map((o, i) => {
+			return fs.promises.writeFile(
+				i ? join(dir, o.path) : entry,
+				o.contents
+			);
+		})
+	);
 }
 
 const _ = ' ';
@@ -140,8 +158,8 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 	src = exists(src) ? src : dir;
 	let files = await ls(src);
 
-	let i=0, j=0, conds: Normal.Conditions;
-	let entry: string, file: string, rgx: RegExp;
+	let i=0, j=0, conds: Normal.Conditions, rgx: RegExp;
+	let file: string, entry: string, types: string | null;
 
 	for (paths.sort(); i < paths.length; i++) {
 		entry = paths[i];
@@ -157,12 +175,18 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 		}
 
 		file = files[j] && join(src, files[j]);
-		if (file) inputs.push({ file, output: conds });
-		else throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
+		if (file) {
+			types = file.replace(/\.([mc]?[tj]sx?)$/, '.d.ts');
+			types = exists(types) ? types : null;
+			inputs.push({ file, types, output: conds });
+		} else {
+			throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
+		}
 	}
 
 	return inputs;
 }
+
 /**
  * alphasort object/array recursively
  * fingerprint the object for bundle identity
@@ -192,4 +216,11 @@ export function fingerprint<T extends object>(input: T): string {
 	}
 
 	return sha.digest('hex');
+}
+
+export function bundle(options: esbuild.BuildOptions): Promise<esbuild.OutputFile[] | void> {
+	options.write = false;
+	return esbuild.build(options)
+		.then(b => b.outputFiles)
+		.catch(err => void 0);
 }
