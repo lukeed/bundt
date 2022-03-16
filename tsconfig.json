@@ -3,6 +3,7 @@
     "strict": true,
     "allowJs": true,
     "target": "es2020",
+    "resolveJsonModule": true,
     "moduleResolution": "node",
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
@@ -13,7 +14,11 @@
     "alwaysStrict": true,
     "module": "esnext",
     "checkJs": true,
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "bundt": ["src/index.ts"]
+    }
   },
   "include": [
     "*.ts",

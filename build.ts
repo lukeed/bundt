@@ -1,26 +1,17 @@
 import * as fs from 'fs';
 import { minify } from 'terser';
 import * as esbuild from 'esbuild';
+import { builtinModules } from 'module';
+import * as pkg from './package.json';
 
-async function build(input: string, output: string, format: esbuild.Format) {
-	try {
-		var result = await esbuild.build({
-			minify: true,
-			format: format,
-			entryPoints: [input],
-			logLevel: 'warning',
-			target: 'es2020',
-			write: false,
-		});
-		if (result.errors.length > 0) {
-			process.exitCode = 1;
-		}
-	} catch (err) {
-		return process.exitCode = 1;
-	}
+let commons: esbuild.CommonOptions = {
+	minify: true,
+	charset: 'utf8',
+	logLevel: 'warning',
+	target: 'es2020',
+};
 
-	let content = result.outputFiles[0].text;
-
+async function write(output: string, content: string) {
 	let data = await minify(content, {
 		module: true,
 		compress: true,
@@ -28,7 +19,7 @@ async function build(input: string, output: string, format: esbuild.Format) {
 	});
 
 	if (data.code) {
-		await fs.promises.writeFile(output, data.code);
+		await fs.promises.writeFile(output, content);
 		console.log('~> write "%s" output~!', output);
 	} else {
 		console.error('Missing "code" key post-minify');
@@ -36,7 +27,34 @@ async function build(input: string, output: string, format: esbuild.Format) {
 	}
 }
 
-console.log('');
-await build('src/index.ts', 'index.mjs', 'esm');
-await build('src/bin.ts', 'bin.js', 'cjs');
-console.log('');
+console.log('---');
+
+let index = await esbuild.build({
+	...commons,
+	write: false,
+	entryPoints: ['src/index.ts'],
+	format: 'esm',
+	bundle: true,
+	external: [
+		pkg.name,
+		...builtinModules,
+		...Object.keys(pkg.dependencies),
+	],
+}).then(result => {
+	if (result.errors.length > 0) {
+		process.exitCode = 1;
+	}
+	return result.outputFiles[0].text;
+}).catch(err => {
+	return process.exit(1);
+});
+
+await write('index.mjs', index);
+
+let bin = await fs.promises.readFile('src/bin.ts', 'utf8').then(txt => {
+	return esbuild.transform(txt, { ...commons, loader: 'ts' });
+});
+
+await write('bin.js', bin.code);
+
+console.log('---');
