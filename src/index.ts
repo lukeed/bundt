@@ -1,19 +1,17 @@
 // import { gzipSync } from 'zlib';
 import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
-import { dirname, resolve, join } from 'path';
-// import { white, red, cyan, dim } from 'kleur';
 import * as $ from './utils';
 
-import type { Input } from './types';
+import type { FileData } from './types';
 import type { Options, Output } from '..';
 
 export async function build(pkgdir: string, options?: Options) {
 	options = options || {};
-	pkgdir = resolve(pkgdir || '.');
+	pkgdir = $.resolve(pkgdir || '.');
 
-	let rcfile = join(pkgdir, '.terserrc');
-	let pkgfile = join(pkgdir, 'package.json');
+	let rcfile = $.join(pkgdir, '.terserrc');
+	let pkgfile = $.join(pkgdir, 'package.json');
 
 	let pkg = $.exists(pkgfile) && await $.pkg(pkgfile);
 	if (!pkg) return $.throws('Missing `package.json` file');
@@ -62,9 +60,9 @@ export async function build(pkgdir: string, options?: Options) {
 		let conditions = inputs[i].output;
 
 		for (key in conditions) {
-			let outfile = join(pkgdir, conditions[key]);
+			let outfile = $.join(pkgdir, conditions[key]);
 			let isRepeat = outfiles.has(outfile);
-			let outdir = dirname(outfile);
+			let outdir = $.dirname(outfile);
 
 			if ($.exists(outdir) && outdir !== pkgdir) {
 				console.log(" REMOVING %s DIR", outdir);
@@ -77,8 +75,6 @@ export async function build(pkgdir: string, options?: Options) {
 				let local = { ...config };
 				local.minify = local.minify || isPROD.test(key);
 				local.sourcemap = local.sourcemap ?? isDEV.test(key);
-				console.log({ local });
-
 
 				// console.log('[TODO] user config', key, entry, config);
 				console.log('[TODO] user config', entry, key);
@@ -137,6 +133,76 @@ export async function build(pkgdir: string, options?: Options) {
 	Object.keys(mapping).sort().forEach(key => {
 		results[key] = [...mapping[key]];
 	});
-	console.log({ results });
 	return results;
+}
+
+export async function report(results: Output, options: {
+	cwd?: string;
+	gzip?: boolean;
+	delta?: [number, number];
+} = {}): Promise<string> {
+	let gzip = !!options.gzip;
+	let cwd = $.resolve(options.cwd || '.');
+
+	let max=0, f=4, s=8, g=6;
+	let i=0, input: string, output='', tmp;
+	let record: Record<string, FileData[]> = {};
+
+	for (input in results) {
+		let files: FileData[] = [];
+
+		await Promise.all(
+			results[input].map(async file => {
+				let stats = await $.inspect(file, gzip);
+
+				if (stats) {
+					stats.file = $.normalize(
+						$.relative(cwd, stats.file)
+					);
+
+					f = Math.max(f, stats.file.length);
+					s = Math.max(s, stats.size.length);
+					if (stats.gzip) {
+						g = Math.max(g, stats.gzip.length);
+					}
+
+					files.push(stats);
+				}
+			})
+		);
+
+		input = $.normalize(
+			$.relative(cwd, input)
+		);
+
+		f = Math.max(f, input.length);
+
+		i = 4 + 2 + f + s;
+		if (gzip) i += 2 + g;
+		max = Math.max(max, i);
+
+		record[input] = files.sort((a, b) => {
+			return a.file.localeCompare(b.file);
+		});
+	}
+
+	for (input in record) {
+		output += '\n  ' + $.rpad(input, f) + '    ' + $.lpad('Filesize', s);
+		if (gzip) output += '  ' + $.lpad('(gzip)', g);
+
+		for (i=0; i < record[input].length; i++) {
+			tmp = record[input][i];
+			output += '\n    ' + $.rpad(tmp.file, f);
+			output += '  ' + $.lpad(tmp.size, s);
+			if (gzip) output += '  ' + $.lpad(tmp.gzip as string, g);
+		}
+
+		output += '\n';
+	}
+
+	if (options.delta) {
+		output += '\n' + $.lpad('Done in ' + $.time(...options.delta), max) + '\n';
+	}
+
+	return '\n' + output + '\n';
 }

@@ -11,3 +11,9 @@ export type Output = {
 }
 
 export function build(pkgdir: string, options?: Options): Promise<Output>;
+
+export function report(results: Output, options?: {
+	cwd?: string;
+	gzip?: boolean;
+	delta?: [number, number];
+}): Promise<string>;

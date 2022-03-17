@@ -43,3 +43,9 @@ export type Input = {
 	types: string | null;
 	output: Normal.Conditions;
 }
+
+export type FileData = {
+	file: string;
+	size: string;
+	gzip: string | false;
+}

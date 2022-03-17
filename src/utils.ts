@@ -1,14 +1,33 @@
 import * as fs from 'fs';
-import { dirname, join } from 'path';
+import * as path from 'path';
+import { gzipSync } from 'zlib';
 import { createHash } from 'crypto';
 import * as esbuild from 'esbuild';
 
-import type { Input, Normal, Raw } from './types';
+import type { FileData, Input, Normal, Raw } from './types';
 
 export const rm = fs.promises.rm;
 export const mkdir = fs.promises.mkdir;
-// export const write = fs.promises.writeFile;
 export const exists = fs.existsSync;
+
+export const join = path.join;
+export const resolve = path.resolve;
+export const normalize = path.normalize;
+export const relative = path.relative;
+export const dirname = path.dirname;
+
+export async function inspect(
+	file: string,
+	gzip: boolean
+): Promise<FileData|void> {
+	let buff = exists(file) && await fs.promises.readFile(file);
+
+	if (buff) return {
+		file: file,
+		size: size(buff.byteLength),
+		gzip: gzip && size(gzipSync(buff).byteLength),
+	};
+}
 
 export function ls(dir: string) {
 	return fs.promises.readdir(dir);
@@ -223,4 +242,11 @@ export function bundle(options: esbuild.BuildOptions): Promise<esbuild.OutputFil
 	return esbuild.build(options)
 		.then(b => b.outputFiles)
 		.catch(err => void 0);
+}
+
+export function time(sec: number, ns: number): string {
+	let num = Math.round(ns / 1e6);
+
+	if (sec < 1) return num + 'ms';
+	return (sec + num / 1e3).toFixed(2) + 's';
 }

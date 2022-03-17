@@ -70,8 +70,17 @@ type Argv = Record<string, string|true>;
 	let cwd = resolve(flags['cwd'] || flags['c'] || '.');
 	let pkgdir = resolve(cwd, input[0] || '.');
 
+	let start = process.hrtime();
 	let output = await bundt.build(pkgdir, options);
-	// let table = bundt.report(output, { gzip: true });
+	let delta = process.hrtime(start);
+
+	console.log(
+		await bundt.report(output, {
+			cwd: pkgdir,
+			delta: delta,
+			gzip: true,
+		})
+	);
 })().catch(err => {
 	let msg = err && err.message || err;
 	msg = msg ? msg.replace(/(\r?\n)/g, '$1      ') : 'Unknown error';
