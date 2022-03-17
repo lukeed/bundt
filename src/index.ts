@@ -3,7 +3,7 @@ import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
 import * as $ from './utils';
 
-import type { FileData } from './types';
+import type { FileData, Normal } from './types';
 import type { Options, Output } from '..';
 
 export async function build(pkgdir: string, options?: Options) {
@@ -17,6 +17,7 @@ export async function build(pkgdir: string, options?: Options) {
 	if (!pkg) return $.throws('Missing `package.json` file');
 
 	let i=0, key: string; // encoder = new TextEncoder;
+	let tmp, conditions: Normal.Conditions;
 	let inputs = await $.inputs(pkgdir, pkg);
 
 	// TODO: find/load config file here
@@ -27,6 +28,7 @@ export async function build(pkgdir: string, options?: Options) {
 	);
 
 	let outfiles = new Set<string>();
+	let outdirs = new Set<string>();
 	let mapping: {
 		[input: string]: Set<string>; // output[]
 	} = {};
@@ -43,19 +45,30 @@ export async function build(pkgdir: string, options?: Options) {
 	// let isNODE = /(^|.)node(.|$)/;
 
 	for (i=0; i < inputs.length; i++) {
+		conditions = inputs[i].output;
+		for (key in conditions) {
+			tmp = $.join(pkgdir, conditions[key]);
+			outdirs.add($.dirname(tmp));
+		}
+	}
+
+	outdirs.delete(pkgdir);
+
+	await Promise.all(
+		[...outdirs].map(d => {
+			return $.rm(d, { recursive: true, force: true });
+		})
+	)
+
+	for (i=0; i < inputs.length; i++) {
 		let entry = inputs[i].file;
 		let targets = new Set<string>();
-		let conditions = inputs[i].output;
+
+		conditions = inputs[i].output;
 
 		for (key in conditions) {
 			let outfile = $.join(pkgdir, conditions[key]);
 			let isRepeat = outfiles.has(outfile);
-			let outdir = $.dirname(outfile);
-
-			if ($.exists(outdir) && outdir !== pkgdir) {
-				console.log(" REMOVING %s DIR", outdir);
-				// await $.rm(outdir, { recursive: true });
-			}
 
 			if (isTYPES.test(key)) {
 				// TODO, w/ isDONE marker
