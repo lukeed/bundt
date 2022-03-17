@@ -22,20 +22,8 @@ export async function build(pkgdir: string, options?: Options) {
 	// TODO: find/load config file here
 
 	let builds: Record<string, ReturnType<typeof $.bundle>> = {};
-
-	let config: esbuild.BuildOptions = {
-		target: 'es2019',
-		sourcemap: false,
-		treeShaking: true,
-		logLevel: 'warning',
-		charset: 'utf8',
-		minify: false,
-		...options,
-		external: options.external || [],
-	};
-
-	config.external = builtinModules.concat(
-		pkg.external, config.external!
+	let externals = builtinModules.concat(
+		pkg.external, options.external || []
 	);
 
 	let outfiles = new Set<string>();
@@ -72,22 +60,32 @@ export async function build(pkgdir: string, options?: Options) {
 			if (isTYPES.test(key)) {
 				// TODO, w/ isDONE marker
 			} else {
-				let local = { ...config };
-				local.minify = local.minify || isPROD.test(key);
-				local.sourcemap = local.sourcemap ?? isDEV.test(key);
+				let config: esbuild.BuildOptions = {
+					target: 'es2019',
+					sourcemap: false,
+					treeShaking: true,
+					logLevel: 'warning',
+					charset: 'utf8',
+					minify: false,
+					...options,
+				};
+
+				config.external = [...externals];
+				config.sourcemap = config.sourcemap ?? isDEV.test(key);
+				config.minify = config.minify || isPROD.test(key);
 
 				// console.log('[TODO] user config', key, entry, config);
 				console.log('[TODO] user config', entry, key);
 
 				// force these
-				local.write = false;
-				local.entryPoints = [entry];
-				local.format = 'esm';
-				local.bundle = true;
+				config.write = false;
+				config.entryPoints = [entry];
+				config.format = 'esm';
+				config.bundle = true;
 
-				delete local.outfile;
+				delete config.outfile;
 
-				let hash = $.fingerprint(local);
+				let hash = $.fingerprint(config);
 				let bundle = builds[hash];
 
 				if (bundle) {
@@ -95,7 +93,7 @@ export async function build(pkgdir: string, options?: Options) {
 				} else if (isRepeat) {
 					return $.throws(`Generating "${conditions[key]}" output using different configurations!`);
 				} else {
-					builds[hash] = bundle = $.bundle(local);
+					builds[hash] = bundle = $.bundle(config);
 				}
 
 				let outputs = await bundle;
@@ -111,8 +109,6 @@ export async function build(pkgdir: string, options?: Options) {
 				} else if (isREQUIRE.test(key)) {
 					console.log('>> CONVERT ESM->CJS', key);
 				}
-
-				// console.log({ key, outputs, rewrite: toCommonJS.has(key) });
 			}
 
 			// mark as seen
@@ -123,8 +119,6 @@ export async function build(pkgdir: string, options?: Options) {
 		mapping[entry] = targets;
 	}
 
-	console.log('here:', Object.keys(builds));
-
 	await Promise.all(
 		Object.values(builds)
 	);
@@ -133,6 +127,7 @@ export async function build(pkgdir: string, options?: Options) {
 	Object.keys(mapping).sort().forEach(key => {
 		results[key] = [...mapping[key]];
 	});
+
 	return results;
 }
 
