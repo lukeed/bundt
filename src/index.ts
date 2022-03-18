@@ -75,17 +75,15 @@ export async function build(pkgdir: string, options?: Options) {
 			} else {
 				let config: esbuild.BuildOptions = {
 					target: 'es2019',
-					sourcemap: false,
 					treeShaking: true,
 					logLevel: 'warning',
 					charset: 'utf8',
-					minify: false,
 					...options,
 				};
 
 				config.external = [...externals];
 				config.sourcemap = config.sourcemap ?? isDEV.test(key);
-				config.minify = config.minify || isPROD.test(key);
+				config.minify = config.minify ?? isPROD.test(key);
 
 				// console.log('[TODO] user config', key, entry, config);
 				console.log('[TODO] user config', entry, key);
