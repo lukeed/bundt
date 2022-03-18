@@ -26,7 +26,7 @@ throws('should throw Error w/ message', () => {
 		assert.unreachable();
 	} catch (err) {
 		assert.instance(err, Error);
-		assert.is(err.message, 'hello');
+		assert.is((err as Error).message, 'hello');
 	}
 });
 

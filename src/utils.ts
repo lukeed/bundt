@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { gzipSync } from 'zlib';
 import { createHash } from 'crypto';
+import rimports from 'rewrite-imports';
 import * as esbuild from 'esbuild';
 
 import type { FileData, Input, Normal, Raw } from './types';
@@ -37,7 +38,7 @@ export function throws(msg: string): never {
 	throw new Error(msg);
 }
 
-export function write(entry: string, files: esbuild.OutputFile[]) {
+export function write(entry: string, files: esbuild.OutputFile[], toCJS?: boolean) {
 	let dir = dirname(entry);
 
 	if (files.length > 0) {
@@ -48,7 +49,7 @@ export function write(entry: string, files: esbuild.OutputFile[]) {
 		files.map((o, i) => {
 			return fs.promises.writeFile(
 				i ? join(dir, o.path) : entry,
-				o.contents
+				toCJS ? rewrite(o.text) : o.contents
 			);
 		})
 	);
@@ -249,4 +250,27 @@ export function time(sec: number, ns: number): string {
 
 	if (sec < 1) return num + 'ms';
 	return (sec + num / 1e3).toFixed(2) + 's';
+}
+
+/**
+ * @TODO wait for https://github.com/evanw/esbuild/issues/1079
+ */
+export function rewrite(content: string) {
+	let footer = '';
+	return rimports(content)
+		.replace(/(^|\s|;)export default/, '$1module.exports =')
+		.replace(/(^|\s|;)export (const|(?:async )?function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, x, type, name) => {
+			footer += `\nexports.${name} = ${name};`;
+			return `${x}${type} ${name}`;
+		})
+		.replace(/(^|\s|\n|;?)export \{([\s\S]*?)\};?([\n\s]*?|$)/g, (_, x, names: string) => {
+			names.split(',').forEach(name => {
+				let [src, dest] = name.trim().split(/\s+as\s+/);
+				footer += `\nexports.${dest || src} = ${src};`;
+			});
+			return x;
+		})
+		.concat(
+			footer
+		);
 }

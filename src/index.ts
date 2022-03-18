@@ -117,10 +117,9 @@ export async function build(pkgdir: string, options?: Options) {
 				}
 
 				if (isIMPORT.test(key)) {
-					console.log('> WRITE ESM', key);
 					await $.write(outfile, outputs);
 				} else if (isREQUIRE.test(key)) {
-					console.log('>> CONVERT ESM->CJS', key);
+					await $.write(outfile, outputs, true);
 				}
 			}
 
