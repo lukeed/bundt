@@ -1,5 +1,31 @@
 {
   "private": true,
   "name": "foobar",
-  "exports": "./output.mjs"
+  "exports": {
+    ".": {
+      "browser": {
+        "import": "./browser/output.mjs",
+        "require": "./browser/output.cjs"
+      },
+      "node": {
+        "import": "./d/output.mjs",
+        "require": "./node/output.cjs"
+      },
+      "import": "./d/output.mjs",
+      "require": "./d/output.cjs"
+    },
+    "./foobar": {
+      "browser": {
+        "import": "./browser/foobar.mjs",
+        "require": "./browser/foobar.cjs"
+      },
+      "node": {
+        "import": "./node/foobar.mjs",
+        "require": "./node/foobar.cjs"
+      },
+      "import": "./d/foobar.mjs",
+      "require": "./d/foobar.cjs"
+    },
+    "./package.json": "./package.json"
+  }
 }
