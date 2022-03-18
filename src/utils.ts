@@ -4,6 +4,7 @@ import { gzipSync } from 'zlib';
 import { createHash } from 'crypto';
 import rimports from 'rewrite-imports';
 import * as esbuild from 'esbuild';
+import * as terser from 'terser';
 
 import type { FileData, Input, Normal, Raw } from './types';
 
@@ -38,7 +39,12 @@ export function throws(msg: string): never {
 	throw new Error(msg);
 }
 
-export function write(entry: string, files: esbuild.OutputFile[], toCJS?: boolean) {
+export interface WriteOptions {
+	require?: boolean;
+	minify?: terser.MinifyOptions | false;
+}
+
+export function write(entry: string, files: esbuild.OutputFile[], options: WriteOptions) {
 	let dir = dirname(entry);
 
 	if (files.length > 0) {
@@ -46,11 +52,20 @@ export function write(entry: string, files: esbuild.OutputFile[], toCJS?: boolea
 	}
 
 	return Promise.all(
-		files.map((o, i) => {
-			return fs.promises.writeFile(
-				i ? join(dir, o.path) : entry,
-				toCJS ? rewrite(o.text) : o.contents
-			);
+		files.map(async (o, i) => {
+			let file = i ? join(dir, o.path) : entry;
+			if (!options.minify && !options.require) {
+				return fs.promises.writeFile(file, o.contents);
+			}
+
+			let data = o.text;
+			if (options.require) data = convert(data);
+			if (options.minify) await terser.minify(data, options.minify).then(r => {
+				if (r.code) data = r.code;
+				else throws('Invalid terser output');
+			});
+
+			return fs.promises.writeFile(file, data);
 		})
 	);
 }
@@ -81,8 +96,12 @@ export function size(val = 0): string {
 	return out + ' ' + UNITS[exp];
 }
 
+export async function toJSON<T>(file: string): Promise<T> {
+	return JSON.parse(await fs.promises.readFile(file, 'utf8'));
+}
+
 export async function pkg(file: string): Promise<Normal.Package> {
-	let x = JSON.parse(await fs.promises.readFile(file, 'utf8')) as Raw.Package;
+	let x = await toJSON<Raw.Package>(file);
 	if (x.exports == null) return throws('Missing "exports" in `package.json` file');
 	if (x.name == null) return throws('Missing "name" in `package.json` file');
 
@@ -255,7 +274,7 @@ export function time(sec: number, ns: number): string {
 /**
  * @TODO wait for https://github.com/evanw/esbuild/issues/1079
  */
-export function rewrite(content: string) {
+export function convert(content: string) {
 	let footer = '';
 	return rimports(content)
 		.replace(/(^|\s|;)export default/, '$1module.exports =')

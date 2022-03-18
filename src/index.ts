@@ -3,6 +3,7 @@ import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
 import * as $ from './utils';
 
+import type { MinifyOptions } from 'terser';
 import type { FileData, Normal } from './types';
 import type { Options, Output } from '..';
 
@@ -19,6 +20,8 @@ export async function build(pkgdir: string, options?: Options) {
 	let i=0, key: string; // encoder = new TextEncoder;
 	let tmp, conditions: Normal.Conditions;
 	let inputs = await $.inputs(pkgdir, pkg);
+
+	let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile);
 
 	// TODO: find/load config file here
 
@@ -82,8 +85,16 @@ export async function build(pkgdir: string, options?: Options) {
 				};
 
 				config.external = [...externals];
-				config.sourcemap = config.sourcemap ?? isDEV.test(key);
-				config.minify = config.minify ?? isPROD.test(key);
+				config.sourcemap ??= isDEV.test(key);
+
+				let isMinify = config.minify ?? isPROD.test(key);
+
+				// force for $.convert()
+				// ~> will hit terser anyway
+				config.minifyWhitespace = false;
+				config.minifyIdentifiers ??= isMinify;
+				config.minifySyntax ??= isMinify;
+				delete config.minify;
 
 				// console.log('[TODO] user config', key, entry, config);
 				console.log('[TODO] user config', entry, key);
@@ -114,10 +125,12 @@ export async function build(pkgdir: string, options?: Options) {
 					continue;
 				}
 
+				let minify = isMinify && (terser || {});
+
 				if (isIMPORT.test(key)) {
-					await $.write(outfile, outputs);
+					await $.write(outfile, outputs, { minify });
 				} else if (isREQUIRE.test(key)) {
-					await $.write(outfile, outputs, true);
+					await $.write(outfile, outputs, { minify, require: true });
 				}
 			}
 
