@@ -3,10 +3,13 @@ import * as path from 'path';
 import { gzipSync } from 'zlib';
 import { createHash } from 'crypto';
 import rimports from 'rewrite-imports';
-import * as esbuild from 'esbuild';
-import * as terser from 'terser';
+
+let terser: typeof import('terser');
+let esbuild: typeof import('esbuild');
 
 import type { FileData, Input, Normal, Raw } from './types';
+import type { BuildOptions, OutputFile } from 'esbuild';
+import type { MinifyOptions } from 'terser';
 
 export const rm = fs.promises.rm;
 export const mkdir = fs.promises.mkdir;
@@ -41,10 +44,30 @@ export function throws(msg: string): never {
 
 export interface WriteOptions {
 	require?: boolean;
-	minify?: terser.MinifyOptions | false;
+	minify?: MinifyOptions | boolean;
 }
 
-export function write(entry: string, files: esbuild.OutputFile[], options: WriteOptions) {
+// TODO: currently minifying the same file(s) repeatedly
+export async function write(file: string, content: string, options: WriteOptions) {
+	if (options.require) {
+		content = convert(content);
+	}
+
+	if (options.minify) {
+		terser ||= await import('terser');
+
+		if (options.minify === true) options.minify = {};
+		options.minify.module = !options.require;
+
+		let r = await terser.minify(content, options.minify);
+		if (r.code) content = r.code;
+		else throws('Invalid terser output');
+	}
+
+	return fs.promises.writeFile(file, content);
+}
+
+export function dump(entry: string, files: OutputFile[], options: WriteOptions) {
 	let dir = dirname(entry);
 
 	if (files.length > 0) {
@@ -54,18 +77,9 @@ export function write(entry: string, files: esbuild.OutputFile[], options: Write
 	return Promise.all(
 		files.map(async (o, i) => {
 			let file = i ? join(dir, o.path) : entry;
-			if (!options.minify && !options.require) {
-				return fs.promises.writeFile(file, o.contents);
-			}
-
-			let data = o.text;
-			if (options.require) data = convert(data);
-			if (options.minify) await terser.minify(data, options.minify).then(r => {
-				if (r.code) data = r.code;
-				else throws('Invalid terser output');
-			});
-
-			return fs.promises.writeFile(file, data);
+			return (options.minify || options.require)
+				? write(file, o.text, options)
+				: fs.promises.writeFile(file, o.contents);
 		})
 	);
 }
@@ -257,8 +271,9 @@ export function fingerprint<T extends object>(input: T): string {
 	return sha.digest('hex');
 }
 
-export function bundle(options: esbuild.BuildOptions): Promise<esbuild.OutputFile[] | void> {
+export async function bundle(options: BuildOptions): Promise<OutputFile[] | void> {
 	options.write = false;
+	esbuild ||= await import('esbuild');
 	return esbuild.build(options)
 		.then(b => b.outputFiles)
 		.catch(err => void 0);
