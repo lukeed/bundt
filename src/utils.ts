@@ -297,7 +297,7 @@ export function convert(content: string) {
 			footer += `\nexports.${name} = ${name};`;
 			return `${x}${type} ${name}`;
 		})
-		.replace(/(^|\s|\n|;?)export \{([\s\S]*?)\};?([\n\s]*?|$)/g, (_, x, names: string) => {
+		.replace(/(^|\s|\n|;?)export[ ]*?\{([\s\S]*?)\};?([\n\s]*?|$)/g, (_, x, names: string) => {
 			names.split(',').forEach(name => {
 				let [src, dest] = name.trim().split(/\s+as\s+/);
 				footer += `\nexports.${dest || src} = ${src};`;
