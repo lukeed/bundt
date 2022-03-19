@@ -128,9 +128,9 @@ export async function build(pkgdir: string, options?: Options) {
 				let minify = isMinify && (terser || {});
 
 				if (isIMPORT.test(key)) {
-					await $.write(outfile, outputs, { minify });
+					await $.dump(outfile, outputs, { minify });
 				} else if (isREQUIRE.test(key)) {
-					await $.write(outfile, outputs, { minify, require: true });
+					await $.dump(outfile, outputs, { minify, require: true });
 				}
 			}
 

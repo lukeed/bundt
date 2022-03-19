@@ -6,13 +6,13 @@
   "license": "MIT",
   "bin": "bin.js",
   "exports": {
-    ".": "./index.mjs",
+    ".": "./index.js",
     "./package.json": "./package.json"
   },
   "files": [
     "bin.js",
     "index.d.ts",
-    "index.mjs"
+    "index.js"
   ],
   "author": {
     "name": "Luke Edwards",

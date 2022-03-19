@@ -9,6 +9,5 @@ build
 dist
 
 # generated
-/index.mjs
 /index.js
 /bin.js

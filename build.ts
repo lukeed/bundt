@@ -3,28 +3,26 @@ import { minify } from 'terser';
 import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
 import * as pkg from './package.json';
+import * as $ from './src/utils';
 
 let commons: esbuild.CommonOptions = {
-	minify: true,
 	charset: 'utf8',
 	logLevel: 'warning',
+	minifyIdentifiers: true,
+	minifySyntax: true,
 	target: 'es2020',
 };
 
 async function write(output: string, content: string) {
-	let data = await minify(content, {
-		module: true,
-		compress: true,
-		mangle: true,
+	await $.write(output, content, {
+		require: true,
+		minify: {
+			compress: true,
+			mangle: true,
+		}
 	});
 
-	if (data.code) {
-		await fs.promises.writeFile(output, content);
-		console.log('~> write "%s" output~!', output);
-	} else {
-		console.error('Missing "code" key post-minify');
-		process.exitCode = 1;
-	}
+	console.log('~> write "%s" output~!', output);
 }
 
 console.log('---');
@@ -49,7 +47,7 @@ let index = await esbuild.build({
 	return process.exit(1);
 });
 
-await write('index.mjs', index);
+await write('index.js', index);
 
 let bin = await fs.promises.readFile('src/bin.ts', 'utf8').then(txt => {
 	return esbuild.transform(txt, { ...commons, loader: 'ts' });
