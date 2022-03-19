@@ -8,8 +8,13 @@ let terser: typeof import('terser');
 let esbuild: typeof import('esbuild');
 
 import type { FileData, Input, Normal, Raw } from './types';
-import type { BuildOptions, OutputFile } from 'esbuild';
-import type { MinifyOptions } from 'terser';
+import type { MinifyOptions, MinifyOutput } from 'terser';
+import type { BuildOptions } from 'esbuild';
+
+interface Chunk {
+	name: string;
+	text: string;
+}
 
 export const rm = fs.promises.rm;
 export const mkdir = fs.promises.mkdir;
@@ -42,32 +47,18 @@ export function throws(msg: string): never {
 	throw new Error(msg);
 }
 
-export interface WriteOptions {
-	require?: boolean;
-	minify?: MinifyOptions | boolean;
-}
-
-// TODO: currently minifying the same file(s) repeatedly
-export async function write(file: string, content: string, options: WriteOptions) {
-	if (options.require) {
-		content = convert(content);
-	}
-
-	if (options.minify) {
+export async function minify(content: string, options?: MinifyOptions): Promise<MinifyOutput> {
 		terser ||= await import('terser');
 
-		if (options.minify === true) options.minify = {};
-		options.minify.module = !options.require;
-
-		let r = await terser.minify(content, options.minify);
-		if (r.code) content = r.code;
-		else throws('Invalid terser output');
-	}
-
-	return fs.promises.writeFile(file, content);
+	return terser.minify(content, {
+		module: true,
+		compress: true,
+		mangle: true,
+		...options,
+	});
 }
 
-export function dump(entry: string, files: OutputFile[], options: WriteOptions) {
+export function write(entry: string, files: Chunk[], isCJS?: boolean) {
 	let dir = dirname(entry);
 
 	if (files.length > 0) {
@@ -76,10 +67,9 @@ export function dump(entry: string, files: OutputFile[], options: WriteOptions) 
 
 	return Promise.all(
 		files.map(async (o, i) => {
-			let file = i ? join(dir, o.path) : entry;
-			return (options.minify || options.require)
-				? write(file, o.text, options)
-				: fs.promises.writeFile(file, o.contents);
+			let file = i ? join(dir, o.name) : entry;
+			let data = isCJS ? convert(o.text) : o.text;
+			return fs.promises.writeFile(file, data);
 		})
 	);
 }
@@ -271,12 +261,37 @@ export function fingerprint<T extends object>(input: T): string {
 	return sha.digest('hex');
 }
 
-export async function bundle(options: BuildOptions): Promise<OutputFile[] | void> {
+export async function bundle(options: BuildOptions): Promise<Chunk[] | void> {
 	options.write = false;
 	esbuild ||= await import('esbuild');
-	return esbuild.build(options)
-		.then(b => b.outputFiles)
-		.catch(err => void 0);
+
+	let b = await esbuild.build(options).catch(err => void 0);
+	let files = b && b.outputFiles || [];
+	if (!files.length) return;
+
+	let i=0, chunks: Chunk[] = [];
+
+	if (options.minify) {
+		terser ||= await import('terser');
+
+		await Promise.all(
+			files.map(async o => {
+				// TODO: inline|external sourcemap
+				let out = await minify(o.text);
+				if (!out.code) throws('Invalid terser output');
+				chunks.push({ name: o.path, text: out.code });
+			})
+		);
+	} else {
+		for (; i < files.length; i++) {
+			chunks.push({
+				name: files[i].path,
+				text: files[i].text,
+			});
+		}
+	}
+
+	return chunks;
 }
 
 export function time(sec: number, ns: number): string {

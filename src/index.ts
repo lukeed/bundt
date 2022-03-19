@@ -21,7 +21,8 @@ export async function build(pkgdir: string, options?: Options) {
 	let tmp, conditions: Normal.Conditions;
 	let inputs = await $.inputs(pkgdir, pkg);
 
-	let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile);
+	// TODO
+	// let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile);
 
 	// TODO: find/load config file here
 
@@ -85,16 +86,8 @@ export async function build(pkgdir: string, options?: Options) {
 				};
 
 				config.external = [...externals];
+				config.minify ??= isPROD.test(key);
 				config.sourcemap ??= isDEV.test(key);
-
-				let isMinify = config.minify ?? isPROD.test(key);
-
-				// force for $.convert()
-				// ~> will hit terser anyway
-				config.minifyWhitespace = false;
-				config.minifyIdentifiers ??= isMinify;
-				config.minifySyntax ??= isMinify;
-				delete config.minify;
 
 				// console.log('[TODO] user config', key, entry, config);
 				console.log('[TODO] user config', entry, key);
@@ -125,12 +118,16 @@ export async function build(pkgdir: string, options?: Options) {
 					continue;
 				}
 
-				let minify = isMinify && (terser || {});
+				// TODO
+				// let minify = isMinify && (terser || {});
+
+				// TODO: save :: `hash.import|require`~>chunks
+				// TODO: save :: key~>`hash.import|require`
 
 				if (isIMPORT.test(key)) {
-					await $.dump(outfile, outputs, { minify });
+					await $.write(outfile, outputs);
 				} else if (isREQUIRE.test(key)) {
-					await $.dump(outfile, outputs, { minify, require: true });
+					await $.write(outfile, outputs, true);
 				}
 			}
 

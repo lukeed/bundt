@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { minify } from 'terser';
 import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
 import * as pkg from './package.json';
@@ -14,20 +13,18 @@ let commons: esbuild.CommonOptions = {
 };
 
 async function write(output: string, content: string) {
-	await $.write(output, content, {
-		require: true,
-		minify: {
-			compress: true,
-			mangle: true,
-		}
-	});
+	let data = await $.minify(content).then(r => r.code);
+	if (!data) return $.throws('Invalid terser output');
 
+	data = $.convert(data); // ~> commonjs
+	await fs.promises.writeFile(output, data);
 	console.log('~> write "%s" output~!', output);
 }
 
 console.log('---');
 
-let index = await esbuild.build({
+// index.js
+await esbuild.build({
 	...commons,
 	write: false,
 	entryPoints: ['src/index.ts'],
@@ -40,19 +37,16 @@ let index = await esbuild.build({
 	],
 }).then(result => {
 	if (result.errors.length > 0) {
+		console.error(result.errors);
 		process.exitCode = 1;
 	}
-	return result.outputFiles[0].text;
+	return write('index.js', result.outputFiles[0].text);
 }).catch(err => {
 	return process.exit(1);
 });
 
-await write('index.js', index);
-
-let bin = await fs.promises.readFile('src/bin.ts', 'utf8').then(txt => {
-	return esbuild.transform(txt, { ...commons, loader: 'ts' });
-});
-
+let data = await fs.promises.readFile('src/bin.ts', 'utf8');
+let bin = await esbuild.transform(data, { ...commons, loader: 'ts' });
 await write('bin.js', bin.code);
 
 console.log('---');
