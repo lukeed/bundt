@@ -23,14 +23,18 @@ export async function build(pkgdir: string, options?: Options) {
 	let conditions: Normal.Conditions;
 	let inputs = await $.inputs(pkgdir, pkg);
 	let i=0, j=0, key: string, outfile: string;
-	let tmp, hashkey: string, ignores = new Set<string>();
+
+	let tmp, hashkey: string;
+	let IGNORES = new Set<string>();
 
 	let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile) || {};
 
 	let uconfig = await $.find(cwd, pkgdir);
 	let customize = uconfig && await $.load(uconfig);
 
+	let OUTDIRS = new Set<string>();
 	let outfiles = new Set<string>();
+
 	let builds: Record<string, ReturnType<typeof $.bundle>> = {};
 	let externals = builtinModules.concat(
 		pkg.external, options.external || []
@@ -66,8 +70,17 @@ export async function build(pkgdir: string, options?: Options) {
 			outfile = $.join(pkgdir, conditions[key]);
 			let isRepeat = outfiles.has(outfile);
 
+			tmp = $.dirname(outfile);
+			inputs[i].outdirs ||= new Set;
+			inputs[i].outdirs!.add(tmp);
+			OUTDIRS.add(tmp);
+
 			if (isTYPES.test(key)) {
-				// TODO, w/ isDONE marker
+				IGNORES.add(hashkey);
+				if (inputs[i].types) {
+					inputs[i].typeout ||= new Set;
+					inputs[i].typeout!.add(outfile);
+				}
 			} else {
 				let config: esbuild.BuildOptions = {
 					target: 'es2019',
@@ -91,7 +104,7 @@ export async function build(pkgdir: string, options?: Options) {
 					let c = await customize(tmp, config);
 					if (c && typeof c === 'object') config = c;
 					else if (c === false) {
-						ignores.add(hashkey);
+						IGNORES.add(hashkey);
 						continue;
 					};
 				}
@@ -158,22 +171,18 @@ export async function build(pkgdir: string, options?: Options) {
 		Object.values(builds)
 	);
 
-	let OUTDIRS = new Set<string>();
 	let WRITES: Array<[string, string]> = [];
-
 	for (i=0; i < inputs.length; i++) {
 		conditions = inputs[i].output;
 
 		for (key in conditions) {
 			hashkey = inputs[i].entry + '>' + key;
-			if (ignores.has(hashkey)) continue;
-
-			outfile = $.join(pkgdir, conditions[key]);
-			OUTDIRS.add( $.dirname(outfile) );
+			if (IGNORES.has(hashkey)) continue;
 
 			let hash = HASHES[hashkey];
 			if (!hash) $.throws(`Missing output files for "${hashkey}" build`);
 
+			outfile = $.join(pkgdir, conditions[key]);
 			if (CHUNKS[hash]) WRITES.push([outfile, hash]);
 			else $.throws(`Invalid "${hash}" identifier`);
 		}
@@ -187,6 +196,25 @@ export async function build(pkgdir: string, options?: Options) {
 			return $.write(args[0], CHUNKS[args[1]]!);
 		})
 	);
+
+	for (i=0; i < inputs.length; i++) {
+		tmp = inputs[i];
+
+		let src = tmp.types;
+		if (!src) continue;
+
+		let file = tmp.file;
+		let arr = tmp.typeout ? [ ...tmp.typeout ] : [ ...tmp.outdirs! ].map(d => {
+			return $.join(d, 'index.d.ts');
+		});
+
+		await Promise.all(
+			arr.map(f => {
+				graph[file].add(f);
+				return $.copy(src!, f);
+			})
+		);
+	}
 
 	let results: Output = {};
 	Object.keys(graph).sort().forEach(key => {

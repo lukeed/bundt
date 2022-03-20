@@ -13,6 +13,7 @@ import type { Customize } from 'bundt/config';
 import type { BuildOptions } from 'esbuild';
 
 export const exists = fs.existsSync;
+export const copy = fs.promises.copyFile;
 
 export const join = path.join;
 export const resolve = path.resolve;
@@ -194,7 +195,7 @@ export async function pkg(file: string): Promise<Normal.Package> {
 	};
 }
 
-const isJS = /\.[mc]?jsx?$/i;
+const isJS = /(\.[mc]?jsx?|\.d\.ts)$/i;
 
 export function flatten(
 	output: Normal.Conditions,

@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "name": "foobar",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./foobar": {
+      "browser": {
+        "import": "./foobar/browser.mjs",
+        "require": "./foobar/browser.cjs"
+      },
+      "import": "./foobar/index.mjs",
+      "require": "./foobar/index.cjs"
+    },
+    "./package.json": "./package.json"
+  }
+}

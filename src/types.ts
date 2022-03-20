@@ -48,6 +48,8 @@ export interface Input {
 	types: string | null;
 	output: Normal.Conditions;
 	entry: string;
+	outdirs?: Set<string>;
+	typeout?: Set<string>;
 }
 
 export interface FileData {
