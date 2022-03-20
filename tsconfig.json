@@ -17,12 +17,14 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "bundt": ["src/index.ts"]
+      "bundt": ["./index.d.ts"],
+      "bundt/config": ["./config/index.d.ts"]
     }
   },
   "include": [
     "*.ts",
     "*.d.ts",
+    "config",
     "test",
     "src"
   ],

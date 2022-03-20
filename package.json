@@ -7,12 +7,14 @@
   "bin": "bin.js",
   "exports": {
     ".": "./index.js",
+    "./config": "./config/index.js",
     "./package.json": "./package.json"
   },
   "files": [
     "bin.js",
     "index.d.ts",
-    "index.js"
+    "index.js",
+    "config"
   ],
   "author": {
     "name": "Luke Edwards",

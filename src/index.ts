@@ -9,6 +9,8 @@ import type { Options, Output } from '..';
 type BUILDHASH = string;
 
 export async function build(pkgdir: string, options?: Options) {
+	let cwd = $.resolve('.');
+
 	options = options || {};
 	pkgdir = $.resolve(pkgdir || '.');
 
@@ -19,12 +21,14 @@ export async function build(pkgdir: string, options?: Options) {
 	if (!pkg) return $.throws('Missing `package.json` file');
 
 	let conditions: Normal.Conditions;
-	let i=0, j=0, key: string, outfile: string, tmp;
 	let inputs = await $.inputs(pkgdir, pkg);
+	let i=0, j=0, key: string, outfile: string;
+	let tmp, hashkey: string, ignores = new Set<string>();
 
 	let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile) || {};
 
-	// TODO: find/load config file here
+	let uconfig = await $.find(cwd, pkgdir);
+	let customize = uconfig && await $.load(uconfig);
 
 	let outfiles = new Set<string>();
 	let builds: Record<string, ReturnType<typeof $.bundle>> = {};
@@ -57,6 +61,8 @@ export async function build(pkgdir: string, options?: Options) {
 		conditions = inputs[i].output;
 
 		for (key in conditions) {
+			hashkey = inputs[i].entry + '>' + key;
+
 			outfile = $.join(pkgdir, conditions[key]);
 			let isRepeat = outfiles.has(outfile);
 
@@ -75,8 +81,20 @@ export async function build(pkgdir: string, options?: Options) {
 				config.minify ??= isPROD.test(key);
 				config.sourcemap ??= isDEV.test(key);
 
-				// console.log('[TODO] user config', key, entry, config);
-				console.log('[TODO] user config', entry, key);
+				tmp = {
+					file: entry,
+					export: inputs[i].entry,
+					condition: key,
+				};
+
+				if (customize) {
+					let c = await customize(tmp, config);
+					if (c && typeof c === 'object') config = c;
+					else if (c === false) {
+						ignores.add(hashkey);
+						continue;
+					};
+				}
 
 				// force these
 				config.write = false;
@@ -107,10 +125,10 @@ export async function build(pkgdir: string, options?: Options) {
 				if (isIMPORT.test(key)) {
 					hash += '|import';
 					CHUNKS[hash] ||= chunks;
-					HASHES[`${inputs[i].entry}>${key}`] = hash;
+					HASHES[hashkey] = hash;
 				} else if (isREQUIRE.test(key)) {
 					hash += '|require';
-					HASHES[`${inputs[i].entry}>${key}`] = hash;
+					HASHES[hashkey] = hash;
 					if (CHUNKS[hash] == null) {
 						CHUNKS[hash] = [];
 						for (j=0; j < chunks.length; j++) {
@@ -131,7 +149,9 @@ export async function build(pkgdir: string, options?: Options) {
 			targets.add(outfile);
 		} // end per-condition
 
-		graph[entry] = targets;
+		if (targets.size) {
+			graph[entry] = targets;
+		}
 	}
 
 	await Promise.all(
@@ -145,11 +165,14 @@ export async function build(pkgdir: string, options?: Options) {
 		conditions = inputs[i].output;
 
 		for (key in conditions) {
+			hashkey = inputs[i].entry + '>' + key;
+			if (ignores.has(hashkey)) continue;
+
 			outfile = $.join(pkgdir, conditions[key]);
 			OUTDIRS.add( $.dirname(outfile) );
 
-			let hash = HASHES[`${inputs[i].entry}>${key}`];
-			if (!hash) $.throws(`Missing output files for "${inputs[i].entry}">"${key}" build`);
+			let hash = HASHES[hashkey];
+			if (!hash) $.throws(`Missing output files for "${hashkey}" build`);
 
 			if (CHUNKS[hash]) WRITES.push([outfile, hash]);
 			else $.throws(`Invalid "${hash}" identifier`);
@@ -169,7 +192,6 @@ export async function build(pkgdir: string, options?: Options) {
 	Object.keys(graph).sort().forEach(key => {
 		results[key] = [...graph[key]];
 	});
-
 	return results;
 }
 
@@ -238,7 +260,9 @@ export async function report(results: Output, options: {
 	}
 
 	if (options.delta) {
-		output += '\n' + $.lpad('Done in ' + $.time(...options.delta), max) + '\n';
+		tmp = 'Done in ' + $.time(...options.delta);
+		max = Math.max(max, tmp.length);
+		output += '\n' + $.lpad(tmp, max) + '\n';
 	}
 
 	return '\n' + output + '\n';

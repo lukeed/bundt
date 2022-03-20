@@ -9,6 +9,7 @@ let esbuild: typeof import('esbuild');
 
 import type { Chunk, FileData, Input, Normal, Raw } from './types';
 import type { MinifyOptions, MinifyOutput } from 'terser';
+import type { Customize } from 'bundt/config';
 import type { BuildOptions } from 'esbuild';
 
 export const exists = fs.existsSync;
@@ -18,6 +19,74 @@ export const resolve = path.resolve;
 export const normalize = path.normalize;
 export const relative = path.relative;
 export const dirname = path.dirname;
+
+const priority = [
+	'bundt.config.ts',
+	'bundt.config.mjs',
+	'bundt.config.cjs',
+	'bundt.config.js',
+];
+
+/**
+ * Traverse upwards until find a config file
+ * @NOTE Does not leave `root` directory
+ * @modified lukeed/escalade
+ */
+export async function find(root: string, dir: string): Promise<string|void> {
+	let arr = await fs.promises.readdir(dir);
+	let i=0, files = new Set(arr);
+
+	for (; i < priority.length; i++) {
+		if (files.has(priority[i])) {
+			return join(dir, priority[i]);
+		}
+	}
+
+	dir = dirname(dir);
+	if (dir.startsWith(root)) {
+		return find(root, dir);
+	}
+}
+
+export async function load(file: string): Promise<Customize | void> {
+	let c: any;
+
+	if (/\.ts$/.test(file)) {
+		esbuild ||= await import('esbuild');
+
+		require.extensions['.ts'] ||= function (Module, filename) {
+			// @ts-ignore – internal method
+			const pitch = Module._compile.bind(Module);
+
+			// @ts-ignore - internal method
+			Module._compile = (source: string) => {
+				const { code, warnings } = esbuild.transformSync(source, {
+					minify: true,
+					format: 'cjs',
+					sourcemap: 'inline',
+					sourcefile: filename,
+					loader: 'ts',
+				});
+
+				warnings.forEach(msg => {
+					console.warn(`\nesbuild warning in ${filename}:`);
+					console.warn(msg.location);
+					console.warn(msg.text);
+				});
+
+				return pitch(code, filename);
+			};
+
+			require.extensions['.js'](Module, filename);
+		};
+
+		c = require(file);
+	} else {
+		c = await import('file:///' + file);
+	}
+
+	return c.default || c;
+}
 
 export async function inspect(
 	file: string,
@@ -37,7 +106,7 @@ export function throws(msg: string): never {
 }
 
 export async function minify(content: string, options?: MinifyOptions): Promise<MinifyOutput> {
-		terser ||= await import('terser');
+	terser ||= await import('terser');
 
 	return terser.minify(content, {
 		module: true,
@@ -217,7 +286,7 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 		file = files[j] && join(src, files[j]);
 		if (!file) throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
 
-			types = file.replace(/\.([mc]?[tj]sx?)$/, '.d.ts');
+		types = file.replace(/\.([mc]?[tj]sx?)$/, '.d.ts');
 
 		inputs.push({
 			file: file,
