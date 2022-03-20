@@ -54,8 +54,10 @@ type Argv = Record<string, string|true>;
 	// ensure boolean flags dont hoard value
 	let minify = flags['--minify'] || flags['-m'];
 	let sourcemap = flags['--sourcemap'] || flags['-x'];
-	if (typeof minify == 'string') input.unshift(minify);
+	let nocolor = flags['--no-colors'] || flags['--no-color'];
 	if (typeof sourcemap == 'string') input.unshift(sourcemap);
+	if (typeof nocolor == 'string') input.unshift(nocolor);
+	if (typeof minify == 'string') input.unshift(minify);
 
 	const { resolve } = require('path');
 	const bundt = await import('bundt');
@@ -64,10 +66,10 @@ type Argv = Record<string, string|true>;
 	if (sourcemap) options.sourcemap = true;
 	if (minify) options.minify = true;
 
-	let tmp = flags['target'] || flags['t'];
+	let tmp = flags['--target'] || flags['-t'];
 	if (typeof tmp === 'string') options.target = tmp;
 
-	let cwd = resolve(flags['cwd'] || flags['c'] || '.');
+	let cwd = resolve(flags['--cwd'] || flags['-c'] || '.');
 	let pkgdir = resolve(cwd, input[0] || '.');
 
 	let start = process.hrtime();
@@ -78,14 +80,13 @@ type Argv = Record<string, string|true>;
 		await bundt.report(output, {
 			cwd: pkgdir,
 			delta: delta,
+			colors: nocolor == null,
 			gzip: true,
 		})
 	);
 })().catch(err => {
 	let msg = err && err.message || err;
 	msg = msg ? msg.replace(/(\r?\n)/g, '$1      ') : 'Unknown error';
-	console.error('[bundt]', msg);
-
-	// console.error(red().bold('bundt'), msg);
+	console.error('\x1b[1m\x1b[31m[bundt]\x1b[0m', msg);
 	process.exit(1);
 });

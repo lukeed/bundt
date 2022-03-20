@@ -16,4 +16,5 @@ export function report(results: Output, options?: {
 	cwd?: string;
 	gzip?: boolean;
 	delta?: [number, number];
+	colors?: boolean;
 }): Promise<string>;

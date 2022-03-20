@@ -1,5 +1,6 @@
 import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
+import * as colors from './colors';
 import * as $ from './utils';
 
 import type { MinifyOptions } from 'terser';
@@ -227,9 +228,11 @@ export async function report(results: Output, options: {
 	cwd?: string;
 	gzip?: boolean;
 	delta?: [number, number];
+	colors?: boolean;
 } = {}): Promise<string> {
 	let gzip = !!options.gzip;
 	let cwd = $.resolve(options.cwd || '.');
+	if (options.colors === false) colors.disable();
 
 	let max=0, f=4, s=8, g=6;
 	let i=0, input: string, output='', tmp;
@@ -273,15 +276,21 @@ export async function report(results: Output, options: {
 		});
 	}
 
+	f += 2; // extend underline
+	max += 2;
+
 	for (input in record) {
-		output += '\n  ' + $.rpad(input, f) + '    ' + $.lpad('Filesize', s);
-		if (gzip) output += '  ' + $.lpad('(gzip)', g);
+		output += '\n  ' + colors.input($.rpad(input, f));
+		output += '    ' + colors.th($.lpad('Filesize', s));
+		if (gzip) output += '  ' + colors.th($.lpad('(gzip)', g));
 
 		for (i=0; i < record[input].length; i++) {
 			tmp = record[input][i];
-			output += '\n    ' + $.rpad(tmp.file, f);
-			output += '  ' + $.lpad(tmp.size, s);
-			if (gzip) output += '  ' + $.lpad(tmp.gzip as string, g);
+			output += '\n    ' + colors.white($.rpad(tmp.file, f));
+			output += '  ' + colors.cyan($.lpad(tmp.size, s));
+			if (gzip) output += '  ' + colors.gzip(
+				$.lpad(tmp.gzip as string, g)
+			);
 		}
 
 		output += '\n';
