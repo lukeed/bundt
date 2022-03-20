@@ -3,6 +3,7 @@ import * as path from 'path';
 import { gzipSync } from 'zlib';
 import { createHash } from 'crypto';
 import rimports from 'rewrite-imports';
+import { createRequire } from 'module';
 
 let terser: typeof import('terser');
 let esbuild: typeof import('esbuild');
@@ -55,7 +56,10 @@ export async function load(file: string): Promise<Customize | void> {
 	if (/\.ts$/.test(file)) {
 		esbuild ||= await import('esbuild');
 
-		require.extensions['.ts'] ||= function (Module, filename) {
+		// avoid esbuild `require` wrapper stuff
+		const $require = createRequire(import.meta.url);
+
+		$require.extensions['.ts'] ||= function (Module: NodeJS.Module, filename: string) {
 			// @ts-ignore – internal method
 			const pitch = Module._compile.bind(Module);
 
@@ -78,10 +82,10 @@ export async function load(file: string): Promise<Customize | void> {
 				return pitch(code, filename);
 			};
 
-			require.extensions['.js'](Module, filename);
+			$require.extensions['.js'](Module, filename);
 		};
 
-		c = require(file);
+		c = $require(file);
 	} else {
 		c = await import('file:///' + file);
 	}

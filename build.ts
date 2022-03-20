@@ -16,7 +16,6 @@ async function write(output: string, content: string) {
 	let data = await $.minify(content).then(r => r.code);
 	if (!data) return $.throws('Invalid terser output');
 
-	data = $.convert(data); // ~> commonjs
 	await fs.promises.writeFile(output, data);
 	console.log('~> write "%s" output~!', output);
 }
@@ -28,6 +27,7 @@ await esbuild.build({
 	...commons,
 	write: false,
 	entryPoints: ['src/index.ts'],
+	charset: 'utf8',
 	format: 'esm',
 	bundle: true,
 	external: [
@@ -40,7 +40,7 @@ await esbuild.build({
 		console.error(result.errors);
 		process.exitCode = 1;
 	}
-	return write('index.js', result.outputFiles[0].text);
+	return write('index.mjs', result.outputFiles[0].text);
 }).catch(err => {
 	return process.exit(1);
 });

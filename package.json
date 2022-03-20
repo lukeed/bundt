@@ -6,14 +6,14 @@
   "license": "MIT",
   "bin": "bin.js",
   "exports": {
-    ".": "./index.js",
+    ".": "./index.mjs",
     "./config": "./config/index.js",
     "./package.json": "./package.json"
   },
   "files": [
     "bin.js",
     "index.d.ts",
-    "index.js",
+    "index.mjs",
     "config"
   ],
   "author": {
