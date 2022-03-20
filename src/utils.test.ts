@@ -226,6 +226,7 @@ flatten('should ignore non-JS extensions', () => {
 
 	assert.equal(output, {
 		'browser.require': './b.js',
+		'browser.types': './b.d.ts',
 		'require': './r.cjs',
 	});
 });

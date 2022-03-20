@@ -23,8 +23,7 @@
   },
   "scripts": {
     "build": "tsm build.ts",
-    "test": "uvu test -i fixtures",
-    "unit": "uvu -r tsm src .test.ts"
+    "test": "uvu -r tsm src .test.ts"
   },
   "engines": {
     "node": ">=12"
