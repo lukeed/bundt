@@ -110,17 +110,17 @@ export async function build(pkgdir: string, options?: Options) {
 					HASHES[`${inputs[i].entry}>${key}`] = hash;
 				} else if (isREQUIRE.test(key)) {
 					hash += '|require';
+					HASHES[`${inputs[i].entry}>${key}`] = hash;
 					if (CHUNKS[hash] == null) {
 						CHUNKS[hash] = [];
 						for (j=0; j < chunks.length; j++) {
 							tmp = chunks[j];
 							CHUNKS[hash].push({
 								name: tmp.name,
-								text: $.convert(tmp.text),
+								text: $.convert(tmp.text, !!config.minify),
 							});
 						}
 					}
-					HASHES[`${inputs[i].entry}>${key}`] = hash;
 				} else {
 					$.throws(`Unknown "${key}" condition for "${inputs[i].entry}" entry`);
 				}

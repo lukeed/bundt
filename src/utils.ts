@@ -304,20 +304,28 @@ export function time(sec: number, ns: number): string {
 /**
  * @TODO wait for https://github.com/evanw/esbuild/issues/1079
  */
-export function convert(content: string) {
+export function convert(content: string, isMinify: boolean) {
 	let footer = '';
+
+	let ws = isMinify ? '' : ' ';
+	let nl = isMinify ? '' : '\n';
+
 	return rimports(content)
-		.replace(/(^|\s|;)export default/, '$1module.exports =')
+		.replace(/(^|\s|;)export default/, (_, x) => {
+			return (isMinify ? x.trim() : x) + `module.exports${ws}=`
+		})
 		.replace(/(^|\s|;)export (const|(?:async )?function|class|let|var) (.+?)(?=(\(|\s|\=))/gi, (_, x, type, name) => {
-			footer += `\nexports.${name} = ${name};`;
+			footer += `${nl}exports.${name}${ws}=${ws}${name};`;
+
+			if (isMinify) x = x.trim();
 			return `${x}${type} ${name}`;
 		})
 		.replace(/(^|\s|\n|;?)export[ ]*?\{([\s\S]*?)\};?([\n\s]*?|$)/g, (_, x, names: string) => {
 			names.split(',').forEach(name => {
 				let [src, dest] = name.trim().split(/\s+as\s+/);
-				footer += `\nexports.${dest || src} = ${src};`;
+				footer += `${nl}exports.${dest || src}${ws}=${ws}${src};`;
 			});
-			return x;
+			return isMinify ? x.trim() : x;
 		})
 		.concat(
 			footer
