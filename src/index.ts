@@ -9,6 +9,8 @@ import type { Options, Output } from '..';
 
 type BUILDHASH = string;
 
+// TODO: check "files" match for all outfiles
+
 export async function build(pkgdir: string, options?: Options) {
 	let cwd = $.resolve('.');
 
