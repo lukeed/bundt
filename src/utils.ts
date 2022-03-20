@@ -277,7 +277,7 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 		entry = entry.replace('./', '');
 		if (entry === '.') entry = 'index';
 
-		rgx = new RegExp('^' + entry + '(\\.[mc]?[tj]sx?)?$');
+		rgx = new RegExp('^' + entry + '(\\.[mc]?[tj]sx?)$');
 
 		for (j=0; j < files.length; j++) {
 			if (rgx.test(files[j])) break;
