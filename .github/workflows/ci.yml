@@ -25,7 +25,7 @@ jobs:
       run: npx nyc npm test
 
     - name: Report
-      if: matrix.nodejs >= 14 && matrix.os == 'ubuntu-latest'
+      if: matrix.nodejs >= 16 && matrix.os == 'ubuntu-latest'
       run: |
         npx nyc report --reporter=text-lcov > coverage.lcov
         bash <(curl -s https://codecov.io/bash)
