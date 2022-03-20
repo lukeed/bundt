@@ -17,12 +17,11 @@ export async function build(pkgdir: string, options?: Options) {
 	let pkg = $.exists(pkgfile) && await $.pkg(pkgfile);
 	if (!pkg) return $.throws('Missing `package.json` file');
 
-	let i=0, key: string; // encoder = new TextEncoder;
-	let tmp, conditions: Normal.Conditions;
+	let i=0, key: string, tmp;
+	let conditions: Normal.Conditions;
 	let inputs = await $.inputs(pkgdir, pkg);
 
-	// TODO
-	// let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile);
+	let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile) || {};
 
 	// TODO: find/load config file here
 
@@ -62,7 +61,7 @@ export async function build(pkgdir: string, options?: Options) {
 		[...outdirs].map(d => {
 			return $.rm(d, { recursive: true, force: true });
 		})
-	)
+	);
 
 	for (i=0; i < inputs.length; i++) {
 		let entry = inputs[i].file;
@@ -108,26 +107,23 @@ export async function build(pkgdir: string, options?: Options) {
 				} else if (isRepeat) {
 					return $.throws(`Generating "${conditions[key]}" output using different configurations!`);
 				} else {
-					builds[hash] = bundle = $.bundle(config);
+					builds[hash] = bundle = $.bundle(config, terser);
 				}
 
-				let outputs = await bundle;
+				let chunks = await bundle;
 
-				if (!outputs) {
+				if (!chunks) {
 					process.exitCode = 1;
 					continue;
 				}
-
-				// TODO
-				// let minify = isMinify && (terser || {});
 
 				// TODO: save :: `hash.import|require`~>chunks
 				// TODO: save :: key~>`hash.import|require`
 
 				if (isIMPORT.test(key)) {
-					await $.write(outfile, outputs);
+					await $.write(outfile, chunks);
 				} else if (isREQUIRE.test(key)) {
-					await $.write(outfile, outputs, true);
+					await $.write(outfile, chunks, true);
 				}
 			}
 

@@ -261,23 +261,23 @@ export function fingerprint<T extends object>(input: T): string {
 	return sha.digest('hex');
 }
 
-export async function bundle(options: BuildOptions): Promise<Chunk[] | void> {
-	options.write = false;
+export async function bundle(config: BuildOptions, options?: MinifyOptions): Promise<Chunk[] | void> {
+	config.write = false;
 	esbuild ||= await import('esbuild');
 
-	let b = await esbuild.build(options).catch(err => void 0);
+	let b = await esbuild.build(config).catch(err => void 0);
 	let files = b && b.outputFiles || [];
 	if (!files.length) return;
 
 	let i=0, chunks: Chunk[] = [];
 
-	if (options.minify) {
+	if (config.minify) {
 		terser ||= await import('terser');
 
 		await Promise.all(
 			files.map(async o => {
 				// TODO: inline|external sourcemap
-				let out = await minify(o.text);
+				let out = await minify(o.text, options);
 				if (!out.code) throws('Invalid terser output');
 				chunks.push({ name: o.path, text: out.code });
 			})
