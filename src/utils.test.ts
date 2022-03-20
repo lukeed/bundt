@@ -2,16 +2,6 @@ import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
 import * as utils from './utils';
 
-import type { Raw } from './types';
-
-const ls =  suite('ls');
-
-ls('should be a function', () => {
-	assert.type(utils.ls, 'function');
-});
-
-ls.run();
-
 // ---
 
 const throws =  suite('throws');
@@ -138,60 +128,6 @@ pkg('should be a function', () => {
 });
 
 pkg.run();
-
-// ---
-
-const isModule =  suite('isModule');
-
-isModule('should be a function', () => {
-	assert.type(utils.isModule, 'function');
-});
-
-isModule('should always treat "*.mjs" as ESM', () => {
-	let output = utils.isModule('foo.mjs', true);
-	assert.is(output, true);
-
-	output = utils.isModule('foo.mjs', false);
-	assert.is(output, true);
-
-	output = utils.isModule('foo.bar.mjs', true);
-	assert.is(output, true);
-});
-
-isModule('should always treat "*.cjs" as CommonJS', () => {
-	let output = utils.isModule('foo.cjs', true);
-	assert.is(output, false);
-
-	output = utils.isModule('foo.cjs', false);
-	assert.is(output, false);
-
-	output = utils.isModule('foo.bar.cjs', true);
-	assert.is(output, false);
-});
-
-isModule('should treat "*.js" as either', () => {
-	let output = utils.isModule('foo.js', true);
-	assert.is(output, true);
-
-	output = utils.isModule('foo.js', false);
-	assert.is(output, false);
-
-	output = utils.isModule('foo.bar.js', true);
-	assert.is(output, true);
-});
-
-isModule('should ignore non-JS extensions', () => {
-	let output = utils.isModule('foo.json', true);
-	assert.is(output, false);
-
-	output = utils.isModule('foo.ts', true);
-	assert.is(output, false);
-
-	output = utils.isModule('foo.css', true);
-	assert.is(output, false);
-});
-
-isModule.run();
 
 // ---
 

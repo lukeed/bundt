@@ -32,10 +32,6 @@ export async function inspect(
 	};
 }
 
-export function ls(dir: string) {
-	return fs.promises.readdir(dir);
-}
-
 export function throws(msg: string): never {
 	throw new Error(msg);
 }
@@ -129,11 +125,6 @@ export async function pkg(file: string): Promise<Normal.Package> {
 	};
 }
 
-export function isModule(file: string, isESM: boolean): boolean {
-	let [, extn] = /\.([mc]?js)$/.exec(file) || [];
-	return extn === 'mjs' || (isESM && extn === 'js');
-}
-
 const isJS = /\.[mc]?jsx?$/i;
 
 export function flatten(
@@ -205,7 +196,7 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 
 	let src = join(dir, 'src');
 	src = exists(src) ? src : dir;
-	let files = await ls(src);
+	let files = await fs.promises.readdir(src);
 
 	let i=0, j=0, conds: Normal.Conditions, rgx: RegExp;
 	let file: string, entry: string, types: string | null;
