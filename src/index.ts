@@ -106,17 +106,24 @@ export async function build(pkgdir: string, options?: Options) {
 
 				if (isIMPORT.test(key)) {
 					hash += '|import';
+					CHUNKS[hash] ||= chunks;
+					HASHES[`${inputs[i].entry}>${key}`] = hash;
 				} else if (isREQUIRE.test(key)) {
 					hash += '|require';
 					if (CHUNKS[hash] == null) {
+						CHUNKS[hash] = [];
 						for (j=0; j < chunks.length; j++) {
-							chunks[j].text = $.convert(chunks[j].text);
+							tmp = chunks[j];
+							CHUNKS[hash].push({
+								name: tmp.name,
+								text: $.convert(tmp.text),
+							});
 						}
 					}
+					HASHES[`${inputs[i].entry}>${key}`] = hash;
+				} else {
+					$.throws(`Unknown "${key}" condition for "${inputs[i].entry}" entry`);
 				}
-
-				CHUNKS[hash] ||= chunks;
-				HASHES[`${inputs[i].entry}>${key}`] = hash;
 			}
 
 			// mark as seen
