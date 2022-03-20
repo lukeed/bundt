@@ -8,7 +8,7 @@ export namespace Raw {
 	};
 
 	// original package.json
-	export type Package = {
+	export interface Package {
 		name?: string;
 		exports?: Exports;
 		files?: string[];
@@ -29,7 +29,7 @@ export namespace Normal {
 	}
 
 	// formatted package.json
-	export type Package = {
+	export interface Package {
 		name: string;
 		files: string[];
 		module: boolean;
@@ -38,13 +38,19 @@ export namespace Normal {
 	}
 }
 
-export type Input = {
+export interface Chunk {
+	name: string;
+	text: string;
+}
+
+export interface Input {
 	file: string;
 	types: string | null;
 	output: Normal.Conditions;
+	entry: string;
 }
 
-export type FileData = {
+export interface FileData {
 	file: string;
 	size: string;
 	gzip: string | false;

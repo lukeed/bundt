@@ -1,11 +1,12 @@
-// import { gzipSync } from 'zlib';
 import * as esbuild from 'esbuild';
 import { builtinModules } from 'module';
 import * as $ from './utils';
 
 import type { MinifyOptions } from 'terser';
-import type { FileData, Normal } from './types';
+import type { Chunk, FileData, Normal } from './types';
 import type { Options, Output } from '..';
+
+type BUILDHASH = string;
 
 export async function build(pkgdir: string, options?: Options) {
 	options = options || {};
@@ -17,24 +18,26 @@ export async function build(pkgdir: string, options?: Options) {
 	let pkg = $.exists(pkgfile) && await $.pkg(pkgfile);
 	if (!pkg) return $.throws('Missing `package.json` file');
 
-	let i=0, key: string, tmp;
 	let conditions: Normal.Conditions;
+	let i=0, j=0, key: string, outfile: string, tmp;
 	let inputs = await $.inputs(pkgdir, pkg);
 
 	let terser = $.exists(rcfile) && await $.toJSON<MinifyOptions>(rcfile) || {};
 
 	// TODO: find/load config file here
 
+	let outfiles = new Set<string>();
 	let builds: Record<string, ReturnType<typeof $.bundle>> = {};
 	let externals = builtinModules.concat(
 		pkg.external, options.external || []
 	);
 
-	let outfiles = new Set<string>();
-	let outdirs = new Set<string>();
-	let mapping: {
+	let graph: {
 		[input: string]: Set<string>; // output[]
 	} = {};
+
+	let CHUNKS: Record<BUILDHASH, Chunk[]> = {};
+	let HASHES: { [entry_key: string]: BUILDHASH } = {};
 
 	let isDEV = /(^|.)development(.|$)/;
 	let isPROD = /(^|.)production(.|$)/;
@@ -48,29 +51,13 @@ export async function build(pkgdir: string, options?: Options) {
 	// let isNODE = /(^|.)node(.|$)/;
 
 	for (i=0; i < inputs.length; i++) {
-		conditions = inputs[i].output;
-		for (key in conditions) {
-			tmp = $.join(pkgdir, conditions[key]);
-			outdirs.add($.dirname(tmp));
-		}
-	}
-
-	outdirs.delete(pkgdir);
-
-	await Promise.all(
-		[...outdirs].map(d => {
-			return $.rm(d, { recursive: true, force: true });
-		})
-	);
-
-	for (i=0; i < inputs.length; i++) {
 		let entry = inputs[i].file;
 		let targets = new Set<string>();
 
 		conditions = inputs[i].output;
 
 		for (key in conditions) {
-			let outfile = $.join(pkgdir, conditions[key]);
+			outfile = $.join(pkgdir, conditions[key]);
 			let isRepeat = outfiles.has(outfile);
 
 			if (isTYPES.test(key)) {
@@ -99,7 +86,7 @@ export async function build(pkgdir: string, options?: Options) {
 
 				delete config.outfile;
 
-				let hash = $.fingerprint(config);
+				let hash: BUILDHASH = $.fingerprint(config);
 				let bundle = builds[hash];
 
 				if (bundle) {
@@ -117,31 +104,63 @@ export async function build(pkgdir: string, options?: Options) {
 					continue;
 				}
 
-				// TODO: save :: `hash.import|require`~>chunks
-				// TODO: save :: key~>`hash.import|require`
-
 				if (isIMPORT.test(key)) {
-					await $.write(outfile, chunks);
+					hash += '|import';
 				} else if (isREQUIRE.test(key)) {
-					await $.write(outfile, chunks, true);
+					hash += '|require';
+					if (CHUNKS[hash] == null) {
+						for (j=0; j < chunks.length; j++) {
+							chunks[j].text = $.convert(chunks[j].text);
+						}
+					}
 				}
+
+				CHUNKS[hash] ||= chunks;
+				HASHES[`${inputs[i].entry}>${key}`] = hash;
 			}
 
 			// mark as seen
 			outfiles.add(outfile);
 			targets.add(outfile);
-		}
+		} // end per-condition
 
-		mapping[entry] = targets;
+		graph[entry] = targets;
 	}
 
 	await Promise.all(
 		Object.values(builds)
 	);
 
+	let OUTDIRS = new Set<string>();
+	let WRITES: Array<[string, string]> = [];
+
+	for (i=0; i < inputs.length; i++) {
+		conditions = inputs[i].output;
+
+		for (key in conditions) {
+			outfile = $.join(pkgdir, conditions[key]);
+			OUTDIRS.add( $.dirname(outfile) );
+
+			let hash = HASHES[`${inputs[i].entry}>${key}`];
+			if (!hash) $.throws(`Missing output files for "${inputs[i].entry}">"${key}" build`);
+
+			if (CHUNKS[hash]) WRITES.push([outfile, hash]);
+			else $.throws(`Invalid "${hash}" identifier`);
+		}
+	}
+
+	OUTDIRS.delete(pkgdir);
+	await $.reset([...OUTDIRS]);
+
+	await Promise.all(
+		WRITES.map(args => {
+			return $.write(args[0], CHUNKS[args[1]]!);
+		})
+	);
+
 	let results: Output = {};
-	Object.keys(mapping).sort().forEach(key => {
-		results[key] = [...mapping[key]];
+	Object.keys(graph).sort().forEach(key => {
+		results[key] = [...graph[key]];
 	});
 
 	return results;

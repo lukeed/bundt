@@ -7,17 +7,10 @@ import rimports from 'rewrite-imports';
 let terser: typeof import('terser');
 let esbuild: typeof import('esbuild');
 
-import type { FileData, Input, Normal, Raw } from './types';
+import type { Chunk, FileData, Input, Normal, Raw } from './types';
 import type { MinifyOptions, MinifyOutput } from 'terser';
 import type { BuildOptions } from 'esbuild';
 
-interface Chunk {
-	name: string;
-	text: string;
-}
-
-export const rm = fs.promises.rm;
-export const mkdir = fs.promises.mkdir;
 export const exists = fs.existsSync;
 
 export const join = path.join;
@@ -58,20 +51,32 @@ export async function minify(content: string, options?: MinifyOptions): Promise<
 	});
 }
 
-export function write(entry: string, files: Chunk[], isCJS?: boolean) {
+export function write(entry: string, files: Chunk[]) {
 	let dir = dirname(entry);
 
-	if (files.length > 0) {
-		exists(dir) || fs.mkdirSync(dir, { recursive: true });
-	}
-
 	return Promise.all(
-		files.map(async (o, i) => {
+		files.map((o, i) => {
 			let file = i ? join(dir, o.name) : entry;
-			let data = isCJS ? convert(o.text) : o.text;
-			return fs.promises.writeFile(file, data);
+			return fs.promises.writeFile(file, o.text);
 		})
 	);
+}
+
+export async function reset(dirs: string[]) {
+	await Promise.all(
+		dirs.sort().map(x => {
+			return fs.promises.rm(x, {
+				recursive: true,
+				force: true,
+			});
+		})
+	);
+
+	for (let i=0; i < dirs.length; i++) {
+		exists(dirs[i]) || fs.mkdirSync(dirs[i], {
+			recursive: true,
+		});
+	}
 }
 
 const _ = ' ';
@@ -88,6 +93,7 @@ export function rpad(str: string, max: number): string {
 export function size(val = 0): string {
 	let x = Math.abs(val);
 	if (x < 1e3) return `${val} ${UNITS[0]}`;
+
 	let exp = Math.min(Math.floor(Math.log10(x) / 3), UNITS.length - 1) || 1;
 	let num = (x / Math.pow(1e3, exp));
 	let out = (val < 0 ? -num : num).toPrecision(3);
@@ -218,13 +224,16 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 		}
 
 		file = files[j] && join(src, files[j]);
-		if (file) {
+		if (!file) throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
+
 			types = file.replace(/\.([mc]?[tj]sx?)$/, '.d.ts');
-			types = exists(types) ? types : null;
-			inputs.push({ file, types, output: conds });
-		} else {
-			throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
-		}
+
+		inputs.push({
+			file: file,
+			types: exists(types) ? types : null,
+			output: conds,
+			entry: paths[i],
+		});
 	}
 
 	return inputs;
