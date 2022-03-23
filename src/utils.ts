@@ -337,6 +337,10 @@ export function fingerprint<T extends object>(input: T): string {
 
 export async function bundle(config: BuildOptions, options?: MinifyOptions): Promise<Chunk[] | void> {
 	config.write = false;
+	if (config.sourcemap) {
+		config.sourcemap = 'inline';
+	}
+
 	esbuild ||= await import('esbuild');
 
 	let b = await esbuild.build(config).catch(err => void 0);

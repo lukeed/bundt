@@ -86,7 +86,7 @@ export async function build(pkgdir: string, options?: Options) {
 				}
 			} else {
 				let config: esbuild.BuildOptions = {
-					target: 'es2019',
+					target: 'es2020',
 					treeShaking: true,
 					logLevel: 'warning',
 					charset: 'utf8',

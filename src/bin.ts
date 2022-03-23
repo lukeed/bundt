@@ -37,17 +37,17 @@ type Argv = Record<string, string|true>;
 		msg += '\n  Usage';
 		msg += '\n    $ bundt [directory] [options]\n';
 		msg += '\n  Options';
-		msg += '\n    -C, --cwd        TODO';
-		msg += '\n    -c, --config     TODO';
-		msg += '\n    -t, --target     TODO';
-		msg += '\n    -m, --minify     TODO';
-		msg += '\n    -x, --sourcemap  TODO';
+		msg += '\n    -C, --cwd        The root working directory (default .)';
+		msg += '\n    -c, --config     Path to configuration file (default: bundt.config.ts)';
+		msg += '\n    -t, --target     The target environment (default: es2020)';
+		msg += '\n    -x, --sourcemap  Generate inline sourcemaps';
+		msg += '\n    -m, --minify     Minify output code';
 		msg += '\n    -v, --version    Displays current version';
 		msg += '\n    -h, --help       Displays this message\n';
 		msg += '\n  Examples';
 		msg += '\n    $ bundt --minify';
-		msg += '\n    $ bundt -xm --target es2020';
-		msg += '\n    $ bundt packages/utils -t=es2020';
+		msg += '\n    $ bundt -xm --target es2017';
+		msg += '\n    $ bundt packages/utils -t=es2017';
 		return console.log(msg + '\n');
 	}
 
