@@ -9,8 +9,6 @@ import type { Options, Output } from '..';
 
 type BUILDHASH = string;
 
-// TODO: check "files" match for all outfiles
-
 export async function build(pkgdir: string, options?: Options) {
 	let cwd = $.resolve('.');
 
@@ -50,6 +48,16 @@ export async function build(pkgdir: string, options?: Options) {
 	let CHUNKS: Record<BUILDHASH, Chunk[]> = {};
 	let HASHES: { [entry_key: string]: BUILDHASH } = {};
 
+	let MATCHES: RegExp[] = [];
+	let NOMATCHES: RegExp[] = [];
+	let RELATIVE = /^([.]{1,2}[/]){1,}/;
+
+	for (i=0; i < pkg.files.length; i++) {
+		tmp = pkg.files[i].replace(/([.+?$])/g, '\\$1').replace(/[*]/g, '.+');
+		if (pkg.files[i].startsWith('!')) NOMATCHES.push(new RegExp(tmp.substring(1), 'i'));
+		else MATCHES.push(new RegExp(tmp, 'i'));
+	}
+
 	let isDEV = /(^|.)development(.|$)/;
 	let isPROD = /(^|.)production(.|$)/;
 	let isTYPES = /(^|.)types(.|$)/;
@@ -69,6 +77,24 @@ export async function build(pkgdir: string, options?: Options) {
 
 		for (key in conditions) {
 			hashkey = inputs[i].entry + '>' + key;
+
+			// "./foobar/index.js" => "foobar/index.js"
+			outfile = conditions[key].replace(RELATIVE, '');
+
+			for (j=0; j < NOMATCHES.length; j++) {
+				if (NOMATCHES[j].test(outfile)) {
+					$.throws(`The "${outfile}" output for "${hashkey}" will not be published because of a "files" entry!`);
+				}
+			}
+
+			if (j = MATCHES.length) {
+				while (j-- > 0) {
+					if (MATCHES[j].test(outfile)) break;
+				}
+				if (j < 0) {
+					$.throws(`The "${outfile}" output for "${hashkey}" did not match any "files" entry!`);
+				}
+			}
 
 			outfile = $.join(pkgdir, conditions[key]);
 			let isRepeat = outfiles.has(outfile);
