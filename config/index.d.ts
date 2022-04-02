@@ -11,4 +11,4 @@ export type Customize = (
 	options: Options,
 ) => Promise<Options | false | void> | Options | false | void;
 
-export function define<T extends Customize>(fn: T): T;
+export function define(fn: Customize): Customize;
