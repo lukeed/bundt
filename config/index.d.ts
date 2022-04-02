@@ -1,7 +1,7 @@
 import type { Options } from 'bundt';
 
 export interface Input {
-	file: string;
+	file: string | null;
 	export: string;
 	condition: string;
 }

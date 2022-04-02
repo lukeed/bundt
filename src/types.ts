@@ -44,7 +44,7 @@ export interface Chunk {
 }
 
 export interface Input {
-	file: string;
+	file: string | null;
 	types: string | null;
 	output: Normal.Conditions;
 	entry: string;

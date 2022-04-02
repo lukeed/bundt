@@ -273,7 +273,7 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 	let files = await fs.promises.readdir(src);
 
 	let i=0, j=0, conds: Normal.Conditions, rgx: RegExp;
-	let file: string, entry: string, types: string | null;
+	let entry: string, file: string|null, types: string|null;
 
 	for (paths.sort(); i < paths.length; i++) {
 		entry = paths[i];
@@ -288,14 +288,16 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 			if (rgx.test(files[j])) break;
 		}
 
-		file = files[j] && join(src, files[j]);
-		if (!file) throws(`Missing \`${entry}.([cm]?[tj]sx?)\` file for "${paths[i]}" entry`);
-
-		types = file.replace(/\.([mc]?[tj]sx?)$/, '.d.ts');
+		if (file = files[j]) {
+			file = join(src, file);
+			types = file.replace(/\.([mc]?[tj]sx?)$/, '.d.ts');
+			types = exists(types) ? types : null;
+		} else {
+			file = types = null;
+		}
 
 		inputs.push({
-			file: file,
-			types: exists(types) ? types : null,
+			file, types,
 			output: conds,
 			entry: paths[i],
 		});

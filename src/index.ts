@@ -131,11 +131,20 @@ export async function build(pkgdir: string, options?: Options) {
 
 				if (customize) {
 					let c = await customize(tmp, config);
-					if (c && typeof c === 'object') config = c;
-					else if (c === false) {
+					if (c === false) {
 						IGNORES.add(hashkey);
 						continue;
-					};
+					} else if (c && typeof c === 'object') {
+						config = c;
+					}
+					entry = tmp.file || entry;
+				}
+
+				if (!entry) {
+					entry = inputs[i].entry;
+					tmp = entry.replace('./', '');
+					if (tmp === '.') tmp = 'index';
+					return $.throws(`Missing \`${tmp}.([cm]?[tj]sx?)\` file for "${entry}" entry`);
 				}
 
 				// force these
@@ -192,7 +201,7 @@ export async function build(pkgdir: string, options?: Options) {
 		} // end per-condition
 
 		if (targets.size) {
-			graph[entry] = targets;
+			graph[entry!] = targets;
 		}
 	}
 
@@ -232,7 +241,7 @@ export async function build(pkgdir: string, options?: Options) {
 		let src = tmp.types;
 		if (!src) continue;
 
-		let file = tmp.file;
+		let file = tmp.file!;
 		let arr = tmp.typeout ? [ ...tmp.typeout ] : [ ...tmp.outdirs! ].map(d => {
 			return $.join(d, 'index.d.ts');
 		});
