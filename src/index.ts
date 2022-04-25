@@ -119,9 +119,12 @@ export async function build(pkgdir: string, options?: Options) {
 					...options,
 				};
 
+
 				config.external = [...externals];
-				config.minify ??= isPROD.test(key);
 				config.sourcemap ??= isDEV.test(key);
+				config.minify = false; // pass thru comments
+
+				let isMinify = config.minify ?? isPROD.test(key);
 
 				tmp = {
 					file: entry,
@@ -186,7 +189,7 @@ export async function build(pkgdir: string, options?: Options) {
 							tmp = chunks[j];
 							CHUNKS[hash].push({
 								name: tmp.name,
-								text: $.convert(tmp.text, !!config.minify),
+								text: $.convert(tmp.text, isMinify),
 							});
 						}
 					}
