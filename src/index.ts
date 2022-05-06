@@ -127,6 +127,11 @@ export async function build(pkgdir: string, options?: Options) {
 				config.sourcemap ??= isDEV.test(key);
 				config.minify = false; // pass thru comments
 
+				// temporary; for "bin" output
+				// should have o.transform or bins list
+				config.format = 'esm';
+				config.bundle = true;
+
 				let isMinify = config.minify ?? isPROD.test(key);
 
 				tmp = {
@@ -156,8 +161,8 @@ export async function build(pkgdir: string, options?: Options) {
 				// force these
 				config.write = false;
 				config.entryPoints = [entry];
-				config.format = 'esm';
-				config.bundle = true;
+				// config.format = 'esm';
+				// config.bundle = true;
 
 				delete config.outfile;
 
