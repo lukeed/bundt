@@ -204,7 +204,7 @@ export async function pkg(file: string): Promise<Normal.Package> {
 
 	return {
 		name: x.name,
-		files: x.files || [],
+		files: x.files,
 		module: x.type === 'module',
 		exports: entries(x),
 		external: arr,

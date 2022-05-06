@@ -32,10 +32,10 @@ export namespace Normal {
 	// formatted package.json
 	export interface Package {
 		name: string;
-		files: string[];
 		module: boolean;
 		external: string[];
 		exports: Exports;
+		files?: string[];
 		bin?: Map<string, string>;
 	}
 }

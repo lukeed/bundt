@@ -52,10 +52,14 @@ export async function build(pkgdir: string, options?: Options) {
 	let NOMATCHES: RegExp[] = [];
 	let RELATIVE = /^([.]{1,2}[/]){1,}/;
 
-	for (i=0; i < pkg.files.length; i++) {
-		tmp = pkg.files[i].replace(/([.+?$])/g, '\\$1').replace(/[*]/g, '.+');
-		if (pkg.files[i].startsWith('!')) NOMATCHES.push(new RegExp(tmp.substring(1), 'i'));
-		else MATCHES.push(new RegExp(tmp, 'i'));
+	if (pkg.files) {
+		pkg.files.length || $.throws(`Empty "files" array!`);
+
+		for (i=0; i < pkg.files.length; i++) {
+			tmp = pkg.files[i].replace(/([.+?$])/g, '\\$1').replace(/[*]/g, '.+');
+			if (pkg.files[i].startsWith('!')) NOMATCHES.push(new RegExp(tmp.substring(1), 'i'));
+			else MATCHES.push(new RegExp(tmp, 'i'));
+		}
 	}
 
 	let isDEV = /(^|.)development(.|$)/;
@@ -118,7 +122,6 @@ export async function build(pkgdir: string, options?: Options) {
 					charset: 'utf8',
 					...options,
 				};
-
 
 				config.external = [...externals];
 				config.sourcemap ??= isDEV.test(key);
