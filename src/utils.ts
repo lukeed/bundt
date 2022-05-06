@@ -360,7 +360,11 @@ export function fingerprint<T extends object>(input: T): string {
 	return sha.digest('hex');
 }
 
-export async function bundle(config: BuildOptions, options?: MinifyOptions): Promise<Chunk[] | void> {
+export async function bundle(
+	config: BuildOptions,
+	options?: MinifyOptions,
+	isMinify?: boolean
+): Promise<Chunk[] | void> {
 	config.write = false;
 	if (config.sourcemap) {
 		config.sourcemap = 'inline';
@@ -374,7 +378,7 @@ export async function bundle(config: BuildOptions, options?: MinifyOptions): Pro
 
 	let i=0, chunks: Chunk[] = [];
 
-	if (config.minify) {
+	if (config.minify || isMinify) {
 		terser ||= await import('terser');
 
 		await Promise.all(

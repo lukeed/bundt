@@ -124,15 +124,13 @@ export async function build(pkgdir: string, options?: Options) {
 				};
 
 				config.external = [...externals];
+				config.minify ??= isPROD.test(key);
 				config.sourcemap ??= isDEV.test(key);
-				config.minify = false; // pass thru comments
 
 				// temporary; for "bin" output
 				// should have o.transform or bins list
 				config.format = 'esm';
 				config.bundle = true;
-
-				let isMinify = config.minify ?? isPROD.test(key);
 
 				tmp = {
 					file: entry,
@@ -161,8 +159,11 @@ export async function build(pkgdir: string, options?: Options) {
 					return $.throws(`Missing \`${tmp}.([cm]?[tj]sx?)\` file for "${entry}" entry`);
 				}
 
+				let isMinify = !!config.minify;
+
 				// force these
 				config.write = false;
+				config.minify = false; // terser comments
 				config.entryPoints = [entry];
 				// config.format = 'esm';
 				// config.bundle = true;
@@ -177,7 +178,7 @@ export async function build(pkgdir: string, options?: Options) {
 				} else if (isRepeat) {
 					return $.throws(`Generating "${conditions[key]}" output using different configurations!`);
 				} else {
-					builds[hash] = bundle = $.bundle(config, terser);
+					builds[hash] = bundle = $.bundle(config, terser, isMinify);
 				}
 
 				let chunks = await bundle;
