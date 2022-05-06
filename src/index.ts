@@ -144,6 +144,9 @@ export async function build(pkgdir: string, options?: Options) {
 					let c = await customize(tmp, config);
 					if (c === false) {
 						IGNORES.add(hashkey);
+						OUTDIRS.delete(
+							$.dirname(outfile)
+						);
 						continue;
 					} else if (c && typeof c === 'object') {
 						config = c;
