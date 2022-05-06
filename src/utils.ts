@@ -190,12 +190,25 @@ export async function pkg(file: string): Promise<Normal.Package> {
 	for (key in x.devDependencies) arr.push(key);
 	for (key in x.dependencies) arr.push(key);
 
+	let dict;
+	if (x.bin) {
+		dict = new Map;
+		if (typeof x.bin === 'string') {
+			dict.set('bin', x.bin); // ~> "src/bin.ts"
+		} else {
+			for (key in x.bin) {
+				dict.set(key, x.bin[key]);
+			}
+		}
+	}
+
 	return {
 		name: x.name,
 		files: x.files || [],
 		module: x.type === 'module',
 		exports: entries(x),
 		external: arr,
+		bin: dict,
 	};
 }
 
@@ -266,6 +279,9 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 	let inputs: Input[] = [];
 
 	let paths = Object.keys(pkg.exports);
+	let bins = pkg.bin || new Map<string, string>();
+
+	for (let k of bins.keys()) paths.push(k);
 	if (paths.length < 1) return inputs;
 
 	let src = join(dir, 'src');
@@ -277,10 +293,17 @@ export async function inputs(dir: string, pkg: Normal.Package): Promise<Input[]>
 
 	for (paths.sort(); i < paths.length; i++) {
 		entry = paths[i];
-		conds = pkg.exports[entry];
 
-		entry = entry.replace('./', '');
-		if (entry === '.') entry = 'index';
+		if (bins.has(entry)) {
+			//~> "import" vs "require"
+			file = bins.get(entry)!; // output
+			rgx = pkg.module ? /\.m?js$/ : /\.mjs$/;
+			conds = { [rgx.test(file) ? 'import' : 'require']: file };
+		} else {
+			conds = pkg.exports[entry];
+			entry = entry.replace('./', '');
+			if (entry === '.') entry = 'index';
+		}
 
 		rgx = new RegExp('^' + entry + '(\\.[mc]?[tj]sx?)$');
 

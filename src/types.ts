@@ -10,6 +10,7 @@ export namespace Raw {
 	// original package.json
 	export interface Package {
 		name?: string;
+		bin?: string | Record<string, string>;
 		exports?: Exports;
 		files?: string[];
 		type?: 'module' | 'commonjs';
@@ -35,6 +36,7 @@ export namespace Normal {
 		module: boolean;
 		external: string[];
 		exports: Exports;
+		bin?: Map<string, string>;
 	}
 }
 
