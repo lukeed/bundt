@@ -32,19 +32,22 @@ function size(val=0) {
 }
 
 function write(file, data, isUMD, toDir) {
-	file = normalize(file);
-	let isDef = /\.d\.ts$/.test(file);
-	if (isDef && toDir !== 'default') {
-		file = join(toDir, file);
-	} else if (toDir && toDir !== 'default') {
-		file = normalize(file.replace(dirname(file), toDir));
-	}
-	mkdir(dirname(file)); // sync
-	let code = isDef && data;
-	code = code || minify(data, Object.assign({ toplevel:!isUMD }, terser)).code;
-	writeFileSync(file, isUMD ? code : data);
-	let gzip = size(gzipSync(code).length);
-	return { file, size: size(code.length), gzip };
+	return Promise.resolve().then(() => {
+		file = normalize(file);
+		let isDef = /\.d\.ts$/.test(file);
+		if (isDef && toDir !== 'default') {
+			file = join(toDir, file);
+		} else if (toDir && toDir !== 'default') {
+			file = normalize(file.replace(dirname(file), toDir));
+		}
+		mkdir(dirname(file)); // sync
+		let code = isDef && data;
+		return code || minify(data, Object.assign({ toplevel: !isUMD }, terser)).then(result => result.code);
+	}).then(code => {
+		writeFileSync(file, isUMD ? code : data);
+		let gzip = size(gzipSync(code).length);
+		return { file, size: size(code.length), gzip };
+	})
 }
 
 function help() {
